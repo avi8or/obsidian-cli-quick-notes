@@ -13,6 +13,107 @@ import (
 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 )
 
+type DailyAppendPlan struct {
+	VaultName         string
+	VaultPath         string
+	Folder            string
+	Pattern           string
+	Filename          string
+	RelativeNotePath  string
+	AbsoluteNotePath  string
+	WillCreateDirs    bool
+	WillCreateFile    bool
+	TemplateRel       string
+	TemplateAbs       string
+	WillApplyTemplate bool
+}
+
+func PlanDailyAppend(vault *obsidian.Vault, now time.Time) (DailyAppendPlan, error) {
+	vaultName, err := vault.DefaultName()
+	if err != nil {
+		return DailyAppendPlan{}, err
+	}
+
+	vaultPath, err := vault.Path()
+	if err != nil {
+		return DailyAppendPlan{}, err
+	}
+
+	settings, err := vault.Settings()
+	if err != nil {
+		return DailyAppendPlan{}, err
+	}
+
+	folder := strings.TrimSpace(settings.DailyNote.Folder)
+	if folder == "" {
+		return DailyAppendPlan{}, errors.New("daily note is not configured (missing daily_note.folder in preferences.json)")
+	}
+
+	pattern := strings.TrimSpace(settings.DailyNote.FilenamePattern)
+	if pattern == "" {
+		pattern = "{YYYY-MM-DD}"
+	}
+	filename, err := obsidian.FormatDatePattern(pattern, now)
+	if err != nil {
+		return DailyAppendPlan{}, err
+	}
+
+	relNotePath := filepath.ToSlash(filepath.Join(folder, filename))
+	abs, err := safeJoinVaultPath(vaultPath, relNotePath)
+	if err != nil {
+		return DailyAppendPlan{}, err
+	}
+	if !strings.HasSuffix(strings.ToLower(abs), ".md") {
+		abs += ".md"
+	}
+
+	plan := DailyAppendPlan{
+		VaultName:        vaultName,
+		VaultPath:        vaultPath,
+		Folder:           folder,
+		Pattern:          pattern,
+		Filename:         filename,
+		RelativeNotePath: relNotePath,
+		AbsoluteNotePath: abs,
+	}
+
+	if _, err := os.Stat(filepath.Dir(abs)); err != nil {
+		if os.IsNotExist(err) {
+			plan.WillCreateDirs = true
+		} else {
+			return DailyAppendPlan{}, err
+		}
+	}
+
+	if _, err := os.Stat(abs); err != nil {
+		if os.IsNotExist(err) {
+			plan.WillCreateFile = true
+		} else {
+			return DailyAppendPlan{}, err
+		}
+	}
+
+	templateRel := strings.TrimSpace(settings.DailyNote.TemplatePath)
+	if templateRel != "" && plan.WillCreateFile {
+		templateAbs, err := obsidian.SafeJoinVaultPath(vaultPath, filepath.ToSlash(templateRel))
+		if err != nil {
+			return DailyAppendPlan{}, fmt.Errorf("invalid template path: %w", err)
+		}
+		if !strings.HasSuffix(strings.ToLower(templateAbs), ".md") {
+			templateAbs += ".md"
+		}
+		if _, err := os.Stat(templateAbs); err != nil {
+			return DailyAppendPlan{}, fmt.Errorf("failed to read template: %w", err)
+		}
+
+		plan.TemplateRel = templateRel
+		plan.TemplateAbs = templateAbs
+		plan.WillApplyTemplate = true
+	}
+
+	return plan, nil
+}
+
 // AppendToDailyNote appends content to today's daily note, using per-vault settings.
 func AppendToDailyNote(vault *obsidian.Vault, content string) error {
 	content = strings.TrimSpace(content)
@@ -20,35 +121,13 @@ func AppendToDailyNote(vault *obsidian.Vault, content string) error {
 		return errors.New("no content provided")
 	}
 
-	vaultPath, err := vault.Path()
+	now := time.Now()
+
+	plan, err := PlanDailyAppend(vault, now)
 	if err != nil {
 		return err
 	}
-
-	settings, err := vault.Settings()
-	if err != nil {
-		return err
-	}
-
-	folder := strings.TrimSpace(settings.DailyNote.Folder)
-	if folder == "" {
-		return errors.New("daily note is not configured (missing daily_note.folder in preferences.json)")
-	}
-
-	pattern := strings.TrimSpace(settings.DailyNote.FilenamePattern)
-	if pattern == "" {
-		pattern = "{YYYY-MM-DD}"
-	}
-
-	filename := expandDailyFilename(pattern, time.Now())
-	relNotePath := filepath.ToSlash(filepath.Join(folder, filename))
-	abs, err := safeJoinVaultPath(vaultPath, relNotePath)
-	if err != nil {
-		return err
-	}
-	if !strings.HasSuffix(strings.ToLower(abs), ".md") {
-		abs += ".md"
-	}
+	abs := plan.AbsoluteNotePath
 
 	if err := os.MkdirAll(filepath.Dir(abs), 0750); err != nil {
 		return fmt.Errorf("failed to create note directory: %w", err)
@@ -65,6 +144,16 @@ func AppendToDailyNote(vault *obsidian.Vault, content string) error {
 			return fmt.Errorf("failed to read note: %w", err)
 		}
 		existing = []byte{}
+
+		if plan.WillApplyTemplate {
+			b, err := os.ReadFile(plan.TemplateAbs)
+			if err != nil {
+				return fmt.Errorf("failed to read template: %w", err)
+			}
+			title := filepath.Base(abs)
+			b = obsidian.ExpandTemplateVariablesAt(b, title, now)
+			existing = b
+		}
 	}
 
 	next := appendWithSeparator(string(existing), content)
@@ -108,13 +197,6 @@ func PromptForContentIfEmpty(content string) (string, error) {
 	return s, nil
 }
 
-func expandDailyFilename(pattern string, now time.Time) string {
-	out := pattern
-	out = strings.ReplaceAll(out, "{YYYY-MM-DD}", now.Format("2006-01-02"))
-	out = strings.ReplaceAll(out, "YYYY-MM-DD", now.Format("2006-01-02"))
-	return out
-}
-
 func appendWithSeparator(existing string, addition string) string {
 	existing = strings.TrimRight(existing, "\n")
 	addition = strings.TrimSpace(addition)
@@ -129,30 +211,5 @@ func appendWithSeparator(existing string, addition string) string {
 
 // safeJoinVaultPath joins a vault root and a relative note path and ensures the result stays within the vault.
 func safeJoinVaultPath(vaultPath string, relativePath string) (string, error) {
-	if filepath.IsAbs(relativePath) {
-		return "", fmt.Errorf("absolute paths are not allowed: %s", relativePath)
-	}
-	cleaned := filepath.Clean(strings.TrimSpace(relativePath))
-	cleaned = strings.TrimPrefix(cleaned, string(filepath.Separator))
-	cleaned = strings.TrimPrefix(cleaned, "./")
-	if cleaned == "" || cleaned == "." {
-		return "", fmt.Errorf("note path cannot be empty")
-	}
-
-	absVault, err := filepath.Abs(vaultPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve vault path: %w", err)
-	}
-
-	joined := filepath.Join(absVault, filepath.FromSlash(cleaned))
-	absJoined, err := filepath.Abs(joined)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve note path: %w", err)
-	}
-
-	if absJoined != absVault && !strings.HasPrefix(absJoined, absVault+string(filepath.Separator)) {
-		return "", fmt.Errorf("note path escapes vault: %s", relativePath)
-	}
-
-	return absJoined, nil
+	return obsidian.SafeJoinVaultPath(vaultPath, relativePath)
 }
