@@ -2,7 +2,7 @@
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
 Previous: pr-04b-append (9283b72917c6b8e36b750760eae7dbac14176bdb)
-This PR: pr-04d-init (ff8b67374a80d03d145413699e5c039ec5bd062d)
+This PR: pr-04d-init (f1ace11aa8bab392bc558cf5b809a201cc8b8ba3)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,6 +10,7 @@ Compare: pr-04b-append..pr-04d-init
 
 ### Commits
 ```
+f1ace11 docs: add versioning note (pr-04d-init)
 ff8b673 docs: refresh README (pr-04d-init)
 6dd855a docs: note PR #59 compatibility
 3e18c90 docs: README document frontmatter command
@@ -33,7 +34,7 @@ db563c8 feat(cli): add target command
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  338 ++-
+ README.md                                          |  342 ++-
  cmd/append.go                                      |   44 +-
  cmd/create.go                                      |    2 +-
  cmd/daily.go                                       |   21 +-
@@ -117,7 +118,7 @@ db563c8 feat(cli): add target command
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 84 files changed, 18572 insertions(+), 91 deletions(-)
+ 84 files changed, 18576 insertions(+), 91 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -171,7 +172,7 @@ db563c8 feat(cli): add target command
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index ef11855..177a318 100644
+index ef11855..142468e 100644
 --- a/README.md
 +++ b/README.md
 @@ -18,6 +18,7 @@ Available Commands:
@@ -190,7 +191,7 @@ index ef11855..177a318 100644
  
  Flags:
    -h, --help      help for obsidian-cli
-@@ -35,8 +37,14 @@ Use "obsidian-cli [command] --help" for more information about a command.
+@@ -35,8 +37,18 @@ Use "obsidian-cli [command] --help" for more information about a command.
  
  ## Description
  
@@ -204,10 +205,14 @@ index ef11855..177a318 100644
 +- Append to daily notes from the CLI
 +- Capture into named “targets” configured in `targets.yaml`
 +- Guided `init` wizard to set up defaults
++
++## Versioning (Maintainer Note)
++
++This PR keeps `obsidian-cli` at `v0.2.0` to avoid unnecessary merge/rebase churn across a stacked PR chain. If you merge the full chain (or the “just merge it” option), consider doing a single version bump afterward (for example to `v0.3.0`) in a follow-up PR/release.
  
  ---
  
-@@ -77,6 +85,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
+@@ -77,6 +89,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
  obsidian-cli --help
  ```
  
@@ -264,7 +269,7 @@ index ef11855..177a318 100644
  ### Editor Flag
  
  The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -220,6 +278,7 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
+@@ -220,6 +282,7 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
  `obsidian-cli` reads and writes configuration under your OS user config directory (`os.UserConfigDir()`):
  
  - `obsidian-cli/preferences.json` (default vault name + optional per-vault `vault_settings`)
@@ -272,7 +277,7 @@ index ef11855..177a318 100644
  
  It also reads Obsidian’s vault list from:
  
-@@ -229,7 +288,7 @@ Note: when writing `preferences.json`, the CLI attempts to create the config dir
+@@ -229,7 +292,7 @@ Note: when writing `preferences.json`, the CLI attempts to create the config dir
  
  ### Open Note
  
@@ -281,7 +286,7 @@ index ef11855..177a318 100644
  
  ```bash
  # Opens note in obsidian vault
-@@ -244,7 +303,7 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+@@ -244,7 +307,7 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
  
  Open the daily note in Obsidian (via Obsidian URI).
  
@@ -290,7 +295,7 @@ index ef11855..177a318 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -253,16 +312,16 @@ obsidian-cli daily
+@@ -253,16 +316,16 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -302,17 +307,17 @@ index ef11855..177a318 100644
  ### Append to Daily Note
  
 -PR04b adds an `append` command which **writes the daily note Markdown file directly** (no Obsidian URI). The daily note path is derived from per-vault settings in `preferences.json`:
-+Append text to today’s daily note **by writing the Markdown file directly** using your per-vault settings in `preferences.json` (`daily_note.folder`, `daily_note.filename_pattern`, and optional `daily_note.template_path`).
- 
+-
 -- `vault_settings.{vault}.daily_note.folder` (required)
 -- `vault_settings.{vault}.daily_note.filename_pattern` (optional; defaults to `{YYYY-MM-DD}`)
--
++Append text to today’s daily note **by writing the Markdown file directly** using your per-vault settings in `preferences.json` (`daily_note.folder`, `daily_note.filename_pattern`, and optional `daily_note.template_path`).
+ 
 -If you omit the `[text]` argument, `append` reads content from stdin (piped) or prompts for multi-line input until EOF (Ctrl-D).
 +If you provide no text, content is read from stdin (piped) or entered interactively until EOF (Ctrl-D to save, Ctrl-C to cancel).
  
  ```bash
  # Append a one-liner
-@@ -274,12 +333,15 @@ obsidian-cli append
+@@ -274,12 +337,15 @@ obsidian-cli append
  # Pipe content
  printf "line1\nline2\n" | obsidian-cli append
  
@@ -330,7 +335,7 @@ index ef11855..177a318 100644
  # Append in a specific vault
  obsidian-cli append --vault "{vault-name}" "Daily standup notes"
  ```
-@@ -317,6 +379,7 @@ Examples:
+@@ -317,6 +383,7 @@ Examples:
    obsidian-cli append --vault "Work" "Daily standup notes"
  
  Flags:
@@ -338,7 +343,7 @@ index ef11855..177a318 100644
    -h, --help                 help for append
        --time-format string   custom timestamp format (Go time format, default: 15:04)
    -t, --timestamp            prepend a timestamp to the content
-@@ -325,6 +388,233 @@ Flags:
+@@ -325,6 +392,233 @@ Flags:
  
  </details>
  
@@ -572,7 +577,7 @@ index ef11855..177a318 100644
  ### Search Note
  
  Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
-@@ -375,13 +665,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+@@ -375,13 +669,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
  
  ### Create / Update Note
  
@@ -591,7 +596,7 @@ index ef11855..177a318 100644
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -405,6 +697,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -405,6 +701,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
  Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
  
@@ -600,7 +605,7 @@ index ef11855..177a318 100644
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -428,14 +722,17 @@ If other notes link to the note, `delete` prints the incoming links and prompts
+@@ -428,14 +726,17 @@ If other notes link to the note, `delete` prints the incoming links and prompts
  Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
  
  ```bash
@@ -621,7 +626,7 @@ index ef11855..177a318 100644
  ```
  
  <details>
-@@ -449,7 +746,7 @@ If other notes link to the note, you'll be prompted to confirm.
+@@ -449,7 +750,7 @@ If other notes link to the note, you'll be prompted to confirm.
  Use --force to skip confirmation (recommended for scripts).
  
  Usage:
@@ -630,7 +635,7 @@ index ef11855..177a318 100644
  
  Aliases:
    delete, del
-@@ -465,6 +762,7 @@ Examples:
+@@ -465,6 +766,7 @@ Examples:
    obsidian-cli delete "note" --vault "Archive"
  
  Flags:
@@ -638,7 +643,7 @@ index ef11855..177a318 100644
    -f, --force          skip confirmation if the note has incoming links
    -h, --help           help for delete
    -v, --vault string   vault name
-@@ -476,6 +774,10 @@ Flags:
+@@ -476,6 +778,10 @@ Flags:
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
  
@@ -5385,6 +5390,7 @@ Compare: origin/main..pr-04d-init
 
 ### Commits
 ```
+f1ace11 docs: add versioning note (pr-04d-init)
 ff8b673 docs: refresh README (pr-04d-init)
 6dd855a docs: note PR #59 compatibility
 3e18c90 docs: README document frontmatter command
@@ -5420,7 +5426,7 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  556 +++-
+ README.md                                          |  560 +++-
  cmd/append.go                                      |  104 +
  cmd/create.go                                      |   35 +-
  cmd/daily.go                                       |   21 +-
@@ -5513,7 +5519,7 @@ d9d3fa9 feat(cli): improve help and error handling
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 93 files changed, 19797 insertions(+), 122 deletions(-)
+ 93 files changed, 19801 insertions(+), 122 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -5567,10 +5573,10 @@ d9d3fa9 feat(cli): improve help and error handling
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..177a318 100644
+index 591f921..142468e 100644
 --- a/README.md
 +++ b/README.md
-@@ -2,12 +2,49 @@
+@@ -2,12 +2,53 @@
  
  ---
  
@@ -5620,10 +5626,14 @@ index 591f921..177a318 100644
 +- Append to daily notes from the CLI
 +- Capture into named “targets” configured in `targets.yaml`
 +- Guided `init` wizard to set up defaults
++
++## Versioning (Maintainer Note)
++
++This PR keeps `obsidian-cli` at `v0.2.0` to avoid unnecessary merge/rebase churn across a stacked PR chain. If you merge the full chain (or the “just merge it” option), consider doing a single version bump afterward (for example to `v0.3.0`) in a follow-up PR/release.
  
  ---
  
-@@ -48,6 +85,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
+@@ -48,6 +89,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
  obsidian-cli --help
  ```
  
@@ -5680,7 +5690,7 @@ index 591f921..177a318 100644
  ### Editor Flag
  
  The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -83,6 +170,57 @@ obsidian-cli set-default "{vault-name}"
+@@ -83,6 +174,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
@@ -5738,7 +5748,7 @@ index 591f921..177a318 100644
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
-@@ -95,6 +233,35 @@ obsidian-cli print-default
+@@ -95,6 +237,35 @@ obsidian-cli print-default
  obsidian-cli print-default --path-only
  ```
  
@@ -5774,7 +5784,7 @@ index 591f921..177a318 100644
  You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
  
  ```bash
-@@ -106,9 +273,22 @@ obs_cd() {
+@@ -106,9 +277,22 @@ obs_cd() {
  
  Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
  
@@ -5798,7 +5808,7 @@ index 591f921..177a318 100644
  
  ```bash
  # Opens note in obsidian vault
-@@ -121,7 +301,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+@@ -121,7 +305,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
  
  ### Daily Note
  
@@ -5809,7 +5819,7 @@ index 591f921..177a318 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -130,6 +312,307 @@ obsidian-cli daily
+@@ -130,6 +316,307 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -6117,7 +6127,7 @@ index 591f921..177a318 100644
  ```
  
  ### Search Note
-@@ -182,13 +665,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+@@ -182,13 +669,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
  
  ### Create / Update Note
  
@@ -6136,7 +6146,7 @@ index 591f921..177a318 100644
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -212,6 +697,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -212,6 +701,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
  Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
  
@@ -6145,7 +6155,7 @@ index 591f921..177a318 100644
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -230,18 +717,67 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -230,18 +721,67 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
