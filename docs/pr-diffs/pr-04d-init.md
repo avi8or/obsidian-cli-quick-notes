@@ -2,7 +2,7 @@
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
 Previous: pr-04b-append (9283b72917c6b8e36b750760eae7dbac14176bdb)
-This PR: pr-04d-init (f1ace11aa8bab392bc558cf5b809a201cc8b8ba3)
+This PR: pr-04d-init (368d30e2b4f8067da8371669e56acf755bf475f9)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,6 +10,7 @@ Compare: pr-04b-append..pr-04d-init
 
 ### Commits
 ```
+368d30e feat(append): select target via --select/--ls
 f1ace11 docs: add versioning note (pr-04d-init)
 ff8b673 docs: refresh README (pr-04d-init)
 6dd855a docs: note PR #59 compatibility
@@ -34,8 +35,8 @@ db563c8 feat(cli): add target command
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  342 ++-
- cmd/append.go                                      |   44 +-
+ README.md                                          |  353 ++-
+ cmd/append.go                                      |  101 +-
  cmd/create.go                                      |    2 +-
  cmd/daily.go                                       |   21 +-
  cmd/delete.go                                      |   17 +-
@@ -118,7 +119,7 @@ db563c8 feat(cli): add target command
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 84 files changed, 18576 insertions(+), 91 deletions(-)
+ 84 files changed, 18644 insertions(+), 91 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -172,7 +173,7 @@ db563c8 feat(cli): add target command
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index ef11855..142468e 100644
+index ef11855..4a91bf8 100644
 --- a/README.md
 +++ b/README.md
 @@ -18,6 +18,7 @@ Available Commands:
@@ -295,7 +296,7 @@ index ef11855..142468e 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -253,16 +316,16 @@ obsidian-cli daily
+@@ -253,16 +316,18 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -307,17 +308,25 @@ index ef11855..142468e 100644
  ### Append to Daily Note
  
 -PR04b adds an `append` command which **writes the daily note Markdown file directly** (no Obsidian URI). The daily note path is derived from per-vault settings in `preferences.json`:
--
--- `vault_settings.{vault}.daily_note.folder` (required)
--- `vault_settings.{vault}.daily_note.filename_pattern` (optional; defaults to `{YYYY-MM-DD}`)
 +Append text to today’s daily note **by writing the Markdown file directly** using your per-vault settings in `preferences.json` (`daily_note.folder`, `daily_note.filename_pattern`, and optional `daily_note.template_path`).
  
--If you omit the `[text]` argument, `append` reads content from stdin (piped) or prompts for multi-line input until EOF (Ctrl-D).
+-- `vault_settings.{vault}.daily_note.folder` (required)
+-- `vault_settings.{vault}.daily_note.filename_pattern` (optional; defaults to `{YYYY-MM-DD}`)
 +If you provide no text, content is read from stdin (piped) or entered interactively until EOF (Ctrl-D to save, Ctrl-C to cancel).
+ 
+-If you omit the `[text]` argument, `append` reads content from stdin (piped) or prompts for multi-line input until EOF (Ctrl-D).
++Tip: if you already use targets, `append --select` / `append --ls` is a convenience shortcut that selects a target from `targets.yaml` and appends to that target instead of the daily note.
  
  ```bash
  # Append a one-liner
-@@ -274,12 +337,15 @@ obsidian-cli append
+@@ -271,15 +336,22 @@ obsidian-cli append "Meeting notes: discussed roadmap"
+ # Multi-line content interactively (Ctrl-D to save, Ctrl-C to cancel)
+ obsidian-cli append
+ 
++# Select a target, then append to it (shortcut for: obsidian-cli target --select)
++obsidian-cli append --select
++obsidian-cli append --ls "Buy milk"
++
  # Pipe content
  printf "line1\nline2\n" | obsidian-cli append
  
@@ -335,15 +344,37 @@ index ef11855..142468e 100644
  # Append in a specific vault
  obsidian-cli append --vault "{vault-name}" "Daily standup notes"
  ```
-@@ -317,6 +383,7 @@ Examples:
+@@ -294,6 +366,8 @@ Appends text to today's daily note.
+ This command writes to a daily note path derived from your per-vault settings
+ in preferences.json (daily_note.folder and daily_note.filename_pattern).
+ 
++If you prefer, you can use --select/--ls to pick a target from targets.yaml and append to that note instead.
++
+ If no text argument is provided, content is read from stdin (piped) or entered
+ interactively until EOF.
+ 
+@@ -310,6 +384,9 @@ Examples:
+   # Append multi-line content interactively (Ctrl-D to save)
+   obsidian-cli append
+ 
++  # Pick a target interactively, then enter content
++  obsidian-cli append --select
++
+   # Append with timestamp
+   obsidian-cli append --timestamp "Started work on feature X"
+ 
+@@ -317,7 +394,10 @@ Examples:
    obsidian-cli append --vault "Work" "Daily standup notes"
  
  Flags:
 +      --dry-run              preview which note would be written without writing
    -h, --help                 help for append
++      --ls                   select a target interactively (targets.yaml)
++      --select               select a target interactively (targets.yaml)
        --time-format string   custom timestamp format (Go time format, default: 15:04)
    -t, --timestamp            prepend a timestamp to the content
-@@ -325,6 +392,233 @@ Flags:
+   -v, --vault string         vault name (not required if default is set)
+@@ -325,6 +405,233 @@ Flags:
  
  </details>
  
@@ -577,7 +608,7 @@ index ef11855..142468e 100644
  ### Search Note
  
  Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
-@@ -375,13 +669,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+@@ -375,13 +682,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
  
  ### Create / Update Note
  
@@ -596,7 +627,7 @@ index ef11855..142468e 100644
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -405,6 +701,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -405,6 +714,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
  Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
  
@@ -605,7 +636,7 @@ index ef11855..142468e 100644
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -428,14 +726,17 @@ If other notes link to the note, `delete` prints the incoming links and prompts
+@@ -428,14 +739,17 @@ If other notes link to the note, `delete` prints the incoming links and prompts
  Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
  
  ```bash
@@ -626,7 +657,7 @@ index ef11855..142468e 100644
  ```
  
  <details>
-@@ -449,7 +750,7 @@ If other notes link to the note, you'll be prompted to confirm.
+@@ -449,7 +763,7 @@ If other notes link to the note, you'll be prompted to confirm.
  Use --force to skip confirmation (recommended for scripts).
  
  Usage:
@@ -635,7 +666,7 @@ index ef11855..142468e 100644
  
  Aliases:
    delete, del
-@@ -465,6 +766,7 @@ Examples:
+@@ -465,6 +779,7 @@ Examples:
    obsidian-cli delete "note" --vault "Archive"
  
  Flags:
@@ -643,7 +674,7 @@ index ef11855..142468e 100644
    -f, --force          skip confirmation if the note has incoming links
    -h, --help           help for delete
    -v, --vault string   vault name
-@@ -476,6 +778,10 @@ Flags:
+@@ -476,6 +791,10 @@ Flags:
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
  
@@ -655,29 +686,103 @@ index ef11855..142468e 100644
  
  Available under [MIT License](./LICENSE)
 diff --git a/cmd/append.go b/cmd/append.go
-index cf40752..544ce4d 100644
+index cf40752..17b3c03 100644
 --- a/cmd/append.go
 +++ b/cmd/append.go
-@@ -2,6 +2,8 @@ package cmd
+@@ -1,7 +1,10 @@
+ package cmd
  
  import (
++	"errors"
  	"fmt"
 +	"io"
 +	"os"
  	"strings"
  	"time"
  
-@@ -13,6 +15,7 @@ import (
+@@ -13,17 +16,21 @@ import (
  var (
  	appendTimestamp bool
  	appendTimeFmt   string
 +	appendDryRun    bool
++	appendSelect    bool
  )
  
  var appendCmd = &cobra.Command{
-@@ -42,10 +45,21 @@ interactively until EOF.`,
+ 	Use:     "append [text]",
+ 	Aliases: []string{"a"},
+-	Short:   "Append text to today's daily note",
++	Short:   "Append text to today's daily note (or select a target)",
+ 	Long: `Appends text to today's daily note.
+ 
+ This command writes to a daily note path derived from your per-vault settings
+ in preferences.json (daily_note.folder and daily_note.filename_pattern).
+ 
++If you prefer, you can use --select/--ls to pick a target from targets.yaml and append to that note instead.
++
+ If no text argument is provided, content is read from stdin (piped) or entered
+ interactively until EOF.`,
+ 	Example: `  # Append a one-liner
+@@ -32,6 +39,9 @@ interactively until EOF.`,
+   # Append multi-line content interactively (Ctrl-D to save)
+   obsidian-cli append
+ 
++  # Pick a target interactively, then enter content
++  obsidian-cli append --select
++
+   # Append with timestamp
+   obsidian-cli append --timestamp "Started work on feature X"
+ 
+@@ -41,11 +51,68 @@ interactively until EOF.`,
+ 	RunE: func(cmd *cobra.Command, args []string) error {
  		vault := obsidian.Vault{Name: vaultName}
  
++		if appendSelect {
++			targetName, err := pickTargetName()
++			if err != nil {
++				return err
++			}
++			if strings.TrimSpace(targetName) == "" {
++				return errors.New("no target selected")
++			}
++
++			content := strings.TrimSpace(strings.Join(args, " "))
++			if content == "" {
++				stat, err := os.Stdin.Stat()
++				if err == nil && (stat.Mode()&os.ModeCharDevice) == 0 {
++					b, err := io.ReadAll(os.Stdin)
++					if err != nil {
++						return err
++					}
++					content = strings.TrimSpace(string(b))
++				} else if !appendDryRun {
++					content, err = actions.PromptForContentIfEmpty(content)
++					if err != nil {
++						return err
++					}
++				}
++			}
++
++			if appendTimestamp {
++				format := appendTimeFmt
++				if strings.TrimSpace(format) == "" {
++					format = "15:04"
++				}
++				content = fmt.Sprintf("- %s %s", time.Now().Format(format), content)
++			}
++
++			if appendDryRun {
++				return printTargetPlan(&vault, targetName)
++			}
++
++			plan, err := actions.AppendToTarget(&vault, targetName, content, time.Now(), false)
++			if err != nil {
++				return err
++			}
++			fmt.Printf("Wrote to: %s\n", plan.AbsoluteNotePath)
++			return nil
++		}
++
  		content := strings.TrimSpace(strings.Join(args, " "))
 -		var err error
 -		content, err = actions.PromptForContentIfEmpty(content)
@@ -701,7 +806,7 @@ index cf40752..544ce4d 100644
  		}
  
  		if appendTimestamp {
-@@ -56,6 +70,27 @@ interactively until EOF.`,
+@@ -56,13 +123,37 @@ interactively until EOF.`,
  			content = fmt.Sprintf("- %s %s", time.Now().Format(format), content)
  		}
  
@@ -729,8 +834,10 @@ index cf40752..544ce4d 100644
  		return actions.AppendToDailyNote(&vault, content)
  	},
  }
-@@ -63,6 +98,7 @@ interactively until EOF.`,
+ 
  func init() {
++	appendCmd.Flags().BoolVar(&appendSelect, "ls", false, "select a target interactively (targets.yaml)")
++	appendCmd.Flags().BoolVar(&appendSelect, "select", false, "select a target interactively (targets.yaml)")
  	appendCmd.Flags().BoolVarP(&appendTimestamp, "timestamp", "t", false, "prepend a timestamp to the content")
  	appendCmd.Flags().StringVar(&appendTimeFmt, "time-format", "", "custom timestamp format (Go time format, default: 15:04)")
 +	appendCmd.Flags().BoolVar(&appendDryRun, "dry-run", false, "preview which note would be written without writing")
@@ -5390,6 +5497,7 @@ Compare: origin/main..pr-04d-init
 
 ### Commits
 ```
+368d30e feat(append): select target via --select/--ls
 f1ace11 docs: add versioning note (pr-04d-init)
 ff8b673 docs: refresh README (pr-04d-init)
 6dd855a docs: note PR #59 compatibility
@@ -5426,8 +5534,8 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  560 +++-
- cmd/append.go                                      |  104 +
+ README.md                                          |  573 ++++-
+ cmd/append.go                                      |  159 ++
  cmd/create.go                                      |   35 +-
  cmd/daily.go                                       |   21 +-
  cmd/delete.go                                      |   48 +-
@@ -5519,7 +5627,7 @@ d9d3fa9 feat(cli): improve help and error handling
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 93 files changed, 19801 insertions(+), 122 deletions(-)
+ 93 files changed, 19869 insertions(+), 122 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -5573,7 +5681,7 @@ d9d3fa9 feat(cli): improve help and error handling
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..142468e 100644
+index 591f921..4a91bf8 100644
 --- a/README.md
 +++ b/README.md
 @@ -2,12 +2,53 @@
@@ -5819,7 +5927,7 @@ index 591f921..142468e 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -130,6 +316,307 @@ obsidian-cli daily
+@@ -130,6 +316,320 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -5834,12 +5942,18 @@ index 591f921..142468e 100644
 +
 +If you provide no text, content is read from stdin (piped) or entered interactively until EOF (Ctrl-D to save, Ctrl-C to cancel).
 +
++Tip: if you already use targets, `append --select` / `append --ls` is a convenience shortcut that selects a target from `targets.yaml` and appends to that target instead of the daily note.
++
 +```bash
 +# Append a one-liner
 +obsidian-cli append "Meeting notes: discussed roadmap"
 +
 +# Multi-line content interactively (Ctrl-D to save, Ctrl-C to cancel)
 +obsidian-cli append
++
++# Select a target, then append to it (shortcut for: obsidian-cli target --select)
++obsidian-cli append --select
++obsidian-cli append --ls "Buy milk"
 +
 +# Pipe content
 +printf "line1\nline2\n" | obsidian-cli append
@@ -5867,6 +5981,8 @@ index 591f921..142468e 100644
 +This command writes to a daily note path derived from your per-vault settings
 +in preferences.json (daily_note.folder and daily_note.filename_pattern).
 +
++If you prefer, you can use --select/--ls to pick a target from targets.yaml and append to that note instead.
++
 +If no text argument is provided, content is read from stdin (piped) or entered
 +interactively until EOF.
 +
@@ -5883,6 +5999,9 @@ index 591f921..142468e 100644
 +  # Append multi-line content interactively (Ctrl-D to save)
 +  obsidian-cli append
 +
++  # Pick a target interactively, then enter content
++  obsidian-cli append --select
++
 +  # Append with timestamp
 +  obsidian-cli append --timestamp "Started work on feature X"
 +
@@ -5892,6 +6011,8 @@ index 591f921..142468e 100644
 +Flags:
 +      --dry-run              preview which note would be written without writing
 +  -h, --help                 help for append
++      --ls                   select a target interactively (targets.yaml)
++      --select               select a target interactively (targets.yaml)
 +      --time-format string   custom timestamp format (Go time format, default: 15:04)
 +  -t, --timestamp            prepend a timestamp to the content
 +  -v, --vault string         vault name (not required if default is set)
@@ -6127,7 +6248,7 @@ index 591f921..142468e 100644
  ```
  
  ### Search Note
-@@ -182,13 +669,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+@@ -182,13 +682,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
  
  ### Create / Update Note
  
@@ -6146,7 +6267,7 @@ index 591f921..142468e 100644
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -212,6 +701,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -212,6 +714,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
  Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
  
@@ -6155,7 +6276,7 @@ index 591f921..142468e 100644
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -230,18 +721,67 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -230,18 +734,67 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
@@ -6177,8 +6298,8 @@ index 591f921..142468e 100644
 +
 +# Preview which file would be deleted (does not delete)
 +obsidian-cli delete --dry-run "{note-path}"
- ```
- 
++```
++
 +<details>
 +<summary><code>delete</code> command reference (help, flags, aliases)</summary>
 +
@@ -6210,8 +6331,8 @@ index 591f921..142468e 100644
 +  -f, --force          skip confirmation if the note has incoming links
 +  -h, --help           help for delete
 +  -v, --vault string   vault name
-+```
-+
+ ```
+ 
 +</details>
 +
  ## Contribution
@@ -6227,13 +6348,14 @@ index 591f921..142468e 100644
  Available under [MIT License](./LICENSE)
 diff --git a/cmd/append.go b/cmd/append.go
 new file mode 100644
-index 0000000..544ce4d
+index 0000000..17b3c03
 --- /dev/null
 +++ b/cmd/append.go
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,159 @@
 +package cmd
 +
 +import (
++	"errors"
 +	"fmt"
 +	"io"
 +	"os"
@@ -6249,16 +6371,19 @@ index 0000000..544ce4d
 +	appendTimestamp bool
 +	appendTimeFmt   string
 +	appendDryRun    bool
++	appendSelect    bool
 +)
 +
 +var appendCmd = &cobra.Command{
 +	Use:     "append [text]",
 +	Aliases: []string{"a"},
-+	Short:   "Append text to today's daily note",
++	Short:   "Append text to today's daily note (or select a target)",
 +	Long: `Appends text to today's daily note.
 +
 +This command writes to a daily note path derived from your per-vault settings
 +in preferences.json (daily_note.folder and daily_note.filename_pattern).
++
++If you prefer, you can use --select/--ls to pick a target from targets.yaml and append to that note instead.
 +
 +If no text argument is provided, content is read from stdin (piped) or entered
 +interactively until EOF.`,
@@ -6268,6 +6393,9 @@ index 0000000..544ce4d
 +  # Append multi-line content interactively (Ctrl-D to save)
 +  obsidian-cli append
 +
++  # Pick a target interactively, then enter content
++  obsidian-cli append --select
++
 +  # Append with timestamp
 +  obsidian-cli append --timestamp "Started work on feature X"
 +
@@ -6276,6 +6404,52 @@ index 0000000..544ce4d
 +	Args: cobra.ArbitraryArgs,
 +	RunE: func(cmd *cobra.Command, args []string) error {
 +		vault := obsidian.Vault{Name: vaultName}
++
++		if appendSelect {
++			targetName, err := pickTargetName()
++			if err != nil {
++				return err
++			}
++			if strings.TrimSpace(targetName) == "" {
++				return errors.New("no target selected")
++			}
++
++			content := strings.TrimSpace(strings.Join(args, " "))
++			if content == "" {
++				stat, err := os.Stdin.Stat()
++				if err == nil && (stat.Mode()&os.ModeCharDevice) == 0 {
++					b, err := io.ReadAll(os.Stdin)
++					if err != nil {
++						return err
++					}
++					content = strings.TrimSpace(string(b))
++				} else if !appendDryRun {
++					content, err = actions.PromptForContentIfEmpty(content)
++					if err != nil {
++						return err
++					}
++				}
++			}
++
++			if appendTimestamp {
++				format := appendTimeFmt
++				if strings.TrimSpace(format) == "" {
++					format = "15:04"
++				}
++				content = fmt.Sprintf("- %s %s", time.Now().Format(format), content)
++			}
++
++			if appendDryRun {
++				return printTargetPlan(&vault, targetName)
++			}
++
++			plan, err := actions.AppendToTarget(&vault, targetName, content, time.Now(), false)
++			if err != nil {
++				return err
++			}
++			fmt.Printf("Wrote to: %s\n", plan.AbsoluteNotePath)
++			return nil
++		}
 +
 +		content := strings.TrimSpace(strings.Join(args, " "))
 +		if content == "" {
@@ -6329,6 +6503,8 @@ index 0000000..544ce4d
 +}
 +
 +func init() {
++	appendCmd.Flags().BoolVar(&appendSelect, "ls", false, "select a target interactively (targets.yaml)")
++	appendCmd.Flags().BoolVar(&appendSelect, "select", false, "select a target interactively (targets.yaml)")
 +	appendCmd.Flags().BoolVarP(&appendTimestamp, "timestamp", "t", false, "prepend a timestamp to the content")
 +	appendCmd.Flags().StringVar(&appendTimeFmt, "time-format", "", "custom timestamp format (Go time format, default: 15:04)")
 +	appendCmd.Flags().BoolVar(&appendDryRun, "dry-run", false, "preview which note would be written without writing")
