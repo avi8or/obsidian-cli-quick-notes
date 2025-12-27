@@ -1,8 +1,8 @@
 # pr-02-links
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-01-ux (06d79e81db4a1be59b2cd9fa1c0c9dd93aa13ee6)
-This PR: pr-02-links (efb95c4fdce15eb23d7c2e68ffb258fbc183268c)
+Previous: pr-01-ux (ee4eee9d1b43bc8e4ce87e2368e67398579a2d99)
+This PR: pr-02-links (25876148af1afee48f96b09eb66c8dd11ca6c523)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,6 +10,7 @@ Compare: pr-01-ux..pr-02-links
 
 ### Commits
 ```
+2587614 docs: refresh README (pr-02-links)
 efb95c4 docs: acknowledge upstream PR #58 for link updates
 d06731f docs: README clarify move link updates
 6233ae2 fix: update path-based wikilinks and markdown links when moving notes
@@ -17,50 +18,19 @@ d06731f docs: README clarify move link updates
 
 ### Diff Stat (all files)
 ```
- README.md                  | 11 ++++++-
  pkg/obsidian/note.go       | 10 ++----
  pkg/obsidian/note_test.go  | 78 ++++++++++++++++++++++++++++++++++++++++++++++
  pkg/obsidian/utils.go      | 53 +++++++++++++++++++++++++++++++
  pkg/obsidian/utils_test.go | 67 +++++++++++++++++++++++++++++++++++++++
- 5 files changed, 210 insertions(+), 9 deletions(-)
+ 4 files changed, 200 insertions(+), 8 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
-diff --git a/README.md b/README.md
-index 1ad0b80..03fc1b7 100644
---- a/README.md
-+++ b/README.md
-@@ -216,7 +216,12 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
- 
- ### Move / Rename Note
- 
--Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
-+Moves a given note (path from top level of vault) to a new path. If given the same path but a different name, it's treated as a rename.
-+
-+When moving/renaming, `obsidian-cli` updates links inside your vault to match the new location, including:
-+
-+- Wikilinks: `[[note]]`, `[[folder/note]]`, `[[folder/note|alias]]`, `[[folder/note#heading]]`
-+- Markdown links: `[text](folder/note.md)`, `[text](./folder/note.md)`, and the same forms without the `.md` extension
- 
- ```bash
- # Renames a note in default obsidian
-@@ -248,6 +253,10 @@ obsidian-cli delete "{note-path}" --vault "{vault-name}"
- 
- Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
- 
-+## Acknowledgements
-+
-+- Link-update support for path-based wikilinks and markdown links builds on upstream PR #58: https://github.com/Yakitrak/obsidian-cli/pull/58
-+
- ## License
- 
- Available under [MIT License](./LICENSE)
 diff --git a/pkg/obsidian/note.go b/pkg/obsidian/note.go
 index 286c06d..3608dd9 100644
 --- a/pkg/obsidian/note.go
@@ -322,17 +292,13 @@ index 1e6ac4f..92f0932 100644
  		testName     string
 ```
 
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color pr-01-ux..pr-02-links
-```
-
 ## Cumulative Diff (vs origin/main)
 
 Compare: origin/main..pr-02-links
 
 ### Commits
 ```
+2587614 docs: refresh README (pr-02-links)
 efb95c4 docs: acknowledge upstream PR #58 for link updates
 d06731f docs: README clarify move link updates
 6233ae2 fix: update path-based wikilinks and markdown links when moving notes
@@ -342,7 +308,7 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                  | 17 +++++++++-
+ README.md                  | 30 +++++++++++++++++-
  cmd/create.go              | 35 +++++++++++++++------
  cmd/move.go                | 31 +++++++++++-------
  cmd/open.go                | 25 +++++++++------
@@ -355,58 +321,56 @@ d9d3fa9 feat(cli): improve help and error handling
  pkg/obsidian/note_test.go  | 78 ++++++++++++++++++++++++++++++++++++++++++++++
  pkg/obsidian/utils.go      | 53 +++++++++++++++++++++++++++++++
  pkg/obsidian/utils_test.go | 67 +++++++++++++++++++++++++++++++++++++++
- 13 files changed, 367 insertions(+), 76 deletions(-)
+ 13 files changed, 380 insertions(+), 76 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..03fc1b7 100644
+index 591f921..3711fca 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,35 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -210,7 +216,12 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+ ## Description
  
- ### Move / Rename Note
- 
--Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
-+Moves a given note (path from top level of vault) to a new path. If given the same path but a different name, it's treated as a rename.
-+
-+When moving/renaming, `obsidian-cli` updates links inside your vault to match the new location, including:
-+
-+- Wikilinks: `[[note]]`, `[[folder/note]]`, `[[folder/note|alias]]`, `[[folder/note#heading]]`
-+- Markdown links: `[text](folder/note.md)`, `[text](./folder/note.md)`, and the same forms without the `.md` extension
- 
- ```bash
- # Renames a note in default obsidian
-@@ -242,6 +253,10 @@ obsidian-cli delete "{note-path}" --vault "{vault-name}"
- 
- Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
- 
-+## Acknowledgements
-+
-+- Link-update support for path-based wikilinks and markdown links builds on upstream PR #58: https://github.com/Yakitrak/obsidian-cli/pull/58
-+
- ## License
- 
- Available under [MIT License](./LICENSE)
 diff --git a/cmd/create.go b/cmd/create.go
 index 338dcc9..f283518 100644
 --- a/cmd/create.go
@@ -1119,9 +1083,4 @@ index 1e6ac4f..92f0932 100644
  func TestReplaceContent(t *testing.T) {
  	tests := []struct {
  		testName     string
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-02-links
 ```

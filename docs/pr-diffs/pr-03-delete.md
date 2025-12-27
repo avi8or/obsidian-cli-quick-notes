@@ -1,8 +1,8 @@
 # pr-03-delete
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-02-links (efb95c4fdce15eb23d7c2e68ffb258fbc183268c)
-This PR: pr-03-delete (e4d1520abef309da7c33da2ea978d5424a8ba9bf)
+Previous: pr-02-links (25876148af1afee48f96b09eb66c8dd11ca6c523)
+This PR: pr-03-delete (c20affdfe1aad365e123839c2fc8c1d299cf4786)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,52 +10,103 @@ Compare: pr-02-links..pr-03-delete
 
 ### Commits
 ```
+c20affd fix(delete): use 'del' alias
+f2f3dea docs: refresh README (pr-03-delete)
 e4d1520 docs: README document delete confirmation and --force
 d3a471d feat(delete): warn when note has incoming links
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                  |  9 +++--
- cmd/delete.go              | 31 +++++++++++-----
+ README.md                  | 49 +++++++++++++++++++++++--
+ cmd/delete.go              | 33 +++++++++++------
  pkg/actions/delete.go      | 32 +++++++++++++++++
  pkg/obsidian/utils.go      | 89 ++++++++++++++++++++++++++++++++++++++++++++++
  pkg/obsidian/utils_test.go | 30 ++++++++++++++++
- 5 files changed, 180 insertions(+), 11 deletions(-)
+ 5 files changed, 220 insertions(+), 13 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 03fc1b7..202e15c 100644
+index 3711fca..e684a37 100644
 --- a/README.md
 +++ b/README.md
-@@ -241,11 +241,16 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -149,7 +149,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ 
+ ### Daily Note
+ 
+-Open daily note in Obsidian. It will create one (using template) if one does not exist.
++Open the daily note in Obsidian (via Obsidian URI).
++
++Note: creation/templates are controlled by Obsidian’s daily note settings/plugins.
+ 
+ ```bash
+ # Creates / opens daily note in obsidian vault
+@@ -258,14 +260,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
-+If other notes link to the note, you'll be prompted to confirm. Use `--force` (or `-f`) to skip confirmation.
++If other notes link to the note, `delete` prints the incoming links and prompts for confirmation. The default is **No** (press Enter to cancel).
++
++Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
 +
  ```bash
 -# Renames a note in default obsidian
-+# Delete a note in the default vault
++# Delete a note in default obsidian
  obsidian-cli delete "{note-path}"
  
 -# Renames a note in given obsidian
-+# Force delete without prompt (recommended for scripts)
++# Force delete without prompt
 +obsidian-cli delete "{note-path}" --force
 +
-+# Delete a note in a specific vault
++# Delete a note in given obsidian
  obsidian-cli delete "{note-path}" --vault "{vault-name}"
  ```
  
++<details>
++<summary><code>delete</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli delete --help
++Delete a note from the vault.
++
++If other notes link to the note, you'll be prompted to confirm.
++Use --force to skip confirmation (recommended for scripts).
++
++Usage:
++  obsidian-cli delete <note> [flags]
++
++Aliases:
++  delete, del
++
++Examples:
++  # Delete a note (prompts if linked)
++  obsidian-cli delete "old-note"
++
++  # Force delete without prompt
++  obsidian-cli delete "temp" --force
++
++  # Delete from specific vault
++  obsidian-cli delete "note" --vault "Archive"
++
++Flags:
++  -f, --force          skip confirmation if the note has incoming links
++  -h, --help           help for delete
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ## Contribution
+ 
+ Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
 diff --git a/cmd/delete.go b/cmd/delete.go
-index f29f691..541c08e 100644
+index f29f691..6a0b63e 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
 @@ -3,30 +3,43 @@ package cmd
@@ -71,8 +122,9 @@ index f29f691..541c08e 100644
 +
  var deleteCmd = &cobra.Command{
 -	Use:     "delete",
+-	Aliases: []string{"d"},
 +	Use:     "delete <note>",
- 	Aliases: []string{"d"},
++	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
 -	Args:    cobra.ExactArgs(1),
 -	Run: func(cmd *cobra.Command, args []string) {
@@ -310,17 +362,14 @@ index 92f0932..4f92060 100644
 +}
 ```
 
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color pr-02-links..pr-03-delete
-```
-
 ## Cumulative Diff (vs origin/main)
 
 Compare: origin/main..pr-03-delete
 
 ### Commits
 ```
+c20affd fix(delete): use 'del' alias
+f2f3dea docs: refresh README (pr-03-delete)
 e4d1520 docs: README document delete confirmation and --force
 d3a471d feat(delete): warn when note has incoming links
 efb95c4 docs: acknowledge upstream PR #58 for link updates
@@ -332,9 +381,9 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                  |  26 ++++++++-
+ README.md                  |  79 +++++++++++++++++++++++--
  cmd/create.go              |  35 ++++++++---
- cmd/delete.go              |  31 +++++++---
+ cmd/delete.go              |  33 +++++++----
  cmd/move.go                |  31 ++++++----
  cmd/open.go                |  25 +++++---
  cmd/print.go               |  26 +++++++--
@@ -347,77 +396,125 @@ d9d3fa9 feat(cli): improve help and error handling
  pkg/obsidian/note_test.go  |  78 +++++++++++++++++++++++++
  pkg/obsidian/utils.go      | 142 +++++++++++++++++++++++++++++++++++++++++++++
  pkg/obsidian/utils_test.go |  97 +++++++++++++++++++++++++++++++
- 15 files changed, 547 insertions(+), 87 deletions(-)
+ 15 files changed, 600 insertions(+), 89 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..202e15c 100644
+index 591f921..e684a37 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,35 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -210,7 +216,12 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+ ## Description
  
- ### Move / Rename Note
+@@ -121,7 +149,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
  
--Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
-+Moves a given note (path from top level of vault) to a new path. If given the same path but a different name, it's treated as a rename.
+ ### Daily Note
+ 
+-Open daily note in Obsidian. It will create one (using template) if one does not exist.
++Open the daily note in Obsidian (via Obsidian URI).
 +
-+When moving/renaming, `obsidian-cli` updates links inside your vault to match the new location, including:
-+
-+- Wikilinks: `[[note]]`, `[[folder/note]]`, `[[folder/note|alias]]`, `[[folder/note#heading]]`
-+- Markdown links: `[text](folder/note.md)`, `[text](./folder/note.md)`, and the same forms without the `.md` extension
++Note: creation/templates are controlled by Obsidian’s daily note settings/plugins.
  
  ```bash
- # Renames a note in default obsidian
-@@ -230,11 +241,16 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+ # Creates / opens daily note in obsidian vault
+@@ -230,14 +260,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
-+If other notes link to the note, you'll be prompted to confirm. Use `--force` (or `-f`) to skip confirmation.
++If other notes link to the note, `delete` prints the incoming links and prompts for confirmation. The default is **No** (press Enter to cancel).
++
++Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
 +
  ```bash
 -# Renames a note in default obsidian
-+# Delete a note in the default vault
++# Delete a note in default obsidian
  obsidian-cli delete "{note-path}"
  
 -# Renames a note in given obsidian
-+# Force delete without prompt (recommended for scripts)
++# Force delete without prompt
 +obsidian-cli delete "{note-path}" --force
 +
-+# Delete a note in a specific vault
++# Delete a note in given obsidian
  obsidian-cli delete "{note-path}" --vault "{vault-name}"
  ```
  
-@@ -242,6 +258,10 @@ obsidian-cli delete "{note-path}" --vault "{vault-name}"
++<details>
++<summary><code>delete</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli delete --help
++Delete a note from the vault.
++
++If other notes link to the note, you'll be prompted to confirm.
++Use --force to skip confirmation (recommended for scripts).
++
++Usage:
++  obsidian-cli delete <note> [flags]
++
++Aliases:
++  delete, del
++
++Examples:
++  # Delete a note (prompts if linked)
++  obsidian-cli delete "old-note"
++
++  # Force delete without prompt
++  obsidian-cli delete "temp" --force
++
++  # Delete from specific vault
++  obsidian-cli delete "note" --vault "Archive"
++
++Flags:
++  -f, --force          skip confirmation if the note has incoming links
++  -h, --help           help for delete
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ## Contribution
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
- 
-+## Acknowledgements
-+
-+- Link-update support for path-based wikilinks and markdown links builds on upstream PR #58: https://github.com/Yakitrak/obsidian-cli/pull/58
-+
- ## License
- 
- Available under [MIT License](./LICENSE)
 diff --git a/cmd/create.go b/cmd/create.go
 index 338dcc9..f283518 100644
 --- a/cmd/create.go
@@ -488,7 +585,7 @@ index 338dcc9..f283518 100644
  }
  
 diff --git a/cmd/delete.go b/cmd/delete.go
-index f29f691..541c08e 100644
+index f29f691..6a0b63e 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
 @@ -3,30 +3,43 @@ package cmd
@@ -504,8 +601,9 @@ index f29f691..541c08e 100644
 +
  var deleteCmd = &cobra.Command{
 -	Use:     "delete",
+-	Aliases: []string{"d"},
 +	Use:     "delete <note>",
- 	Aliases: []string{"d"},
++	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
 -	Args:    cobra.ExactArgs(1),
 -	Run: func(cmd *cobra.Command, args []string) {
@@ -1376,9 +1474,4 @@ index 1e6ac4f..4f92060 100644
 +	assert.NoError(t, err)
 +	assert.Len(t, links, 0)
 +}
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-03-delete
 ```

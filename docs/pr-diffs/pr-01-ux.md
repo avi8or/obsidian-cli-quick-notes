@@ -2,7 +2,7 @@
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
 Previous: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-This PR: pr-01-ux (06d79e81db4a1be59b2cd9fa1c0c9dd93aa13ee6)
+This PR: pr-01-ux (ee4eee9d1b43bc8e4ce87e2368e67398579a2d99)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,13 +10,14 @@ Compare: origin/main..pr-01-ux
 
 ### Commits
 ```
+ee4eee9 docs: refresh README (pr-01-ux)
 06d79e8 docs: README mention command-specific help
 d9d3fa9 feat(cli): improve help and error handling
 ```
 
 ### Diff Stat (all files)
 ```
- README.md             |  6 ++++++
+ README.md             | 30 +++++++++++++++++++++++++++++-
  cmd/create.go         | 35 ++++++++++++++++++++++++++---------
  cmd/move.go           | 31 ++++++++++++++++++++-----------
  cmd/open.go           | 25 ++++++++++++++++---------
@@ -25,33 +26,56 @@ d9d3fa9 feat(cli): improve help and error handling
  cmd/search.go         | 26 ++++++++++++++++++--------
  cmd/search_content.go | 27 ++++++++++++++++++---------
  cmd/set_default.go    | 26 +++++++++++++++++---------
- 9 files changed, 157 insertions(+), 67 deletions(-)
+ 9 files changed, 180 insertions(+), 68 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..1ad0b80 100644
+index 591f921..3711fca 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,35 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
+ ## Description
+ 
 diff --git a/cmd/create.go b/cmd/create.go
 index 338dcc9..f283518 100644
 --- a/cmd/create.go
@@ -504,11 +528,7 @@ index f2cb992..0c855f6 100644
 +		return nil
  	},
  }
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-01-ux
+ 
 ```
 
 ## Cumulative Diff (vs origin/main)
@@ -517,13 +537,14 @@ Compare: origin/main..pr-01-ux
 
 ### Commits
 ```
+ee4eee9 docs: refresh README (pr-01-ux)
 06d79e8 docs: README mention command-specific help
 d9d3fa9 feat(cli): improve help and error handling
 ```
 
 ### Diff Stat (all files)
 ```
- README.md             |  6 ++++++
+ README.md             | 30 +++++++++++++++++++++++++++++-
  cmd/create.go         | 35 ++++++++++++++++++++++++++---------
  cmd/move.go           | 31 ++++++++++++++++++++-----------
  cmd/open.go           | 25 ++++++++++++++++---------
@@ -532,33 +553,56 @@ d9d3fa9 feat(cli): improve help and error handling
  cmd/search.go         | 26 ++++++++++++++++++--------
  cmd/search_content.go | 27 ++++++++++++++++++---------
  cmd/set_default.go    | 26 +++++++++++++++++---------
- 9 files changed, 157 insertions(+), 67 deletions(-)
+ 9 files changed, 180 insertions(+), 68 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..1ad0b80 100644
+index 591f921..3711fca 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,35 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
+ ## Description
+ 
 diff --git a/cmd/create.go b/cmd/create.go
 index 338dcc9..f283518 100644
 --- a/cmd/create.go
@@ -1011,9 +1055,5 @@ index f2cb992..0c855f6 100644
 +		return nil
  	},
  }
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-01-ux
+ 
 ```

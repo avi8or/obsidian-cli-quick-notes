@@ -1,8 +1,8 @@
 # pr-04b-append
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-04a-settings (424ac9815db5626cea2c3c9c9726e01eda8a1539)
-This PR: pr-04b-append (ffbec389ad6215a9aab006322e121deadde449c7)
+Previous: pr-04a-settings (90073194af6ef5d8a39abbeee45a2c2dd70e0257)
+This PR: pr-04b-append (9283b72917c6b8e36b750760eae7dbac14176bdb)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,55 +10,112 @@ Compare: pr-04a-settings..pr-04b-append
 
 ### Commits
 ```
+9283b72 fix(delete): use 'del' alias
+3df0531 docs: refresh README (pr-04b-append)
 ffbec38 docs: README document append command
 bb67cc9 feat(append): add daily note append command
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                  |  22 +++++++
+ README.md                  |  71 ++++++++++++++++++++
  cmd/append.go              |  68 +++++++++++++++++++
  pkg/actions/append.go      | 158 +++++++++++++++++++++++++++++++++++++++++++++
  pkg/actions/append_test.go |  99 ++++++++++++++++++++++++++++
- 4 files changed, 347 insertions(+)
+ 4 files changed, 396 insertions(+)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index f59fd15..f578e5f 100644
+index 3faa817..ef11855 100644
 --- a/README.md
 +++ b/README.md
-@@ -158,6 +158,28 @@ obsidian-cli daily --vault "{vault-name}"
+@@ -12,6 +12,7 @@ Usage:
+   obsidian-cli [command]
+ 
+ Available Commands:
++  append         Append text to today's daily note
+   completion     Generate the autocompletion script for the specified shell
+   create         Creates note in vault
+   daily          Creates or opens daily note in vault
+@@ -254,6 +255,76 @@ obsidian-cli daily --vault "{vault-name}"
  
  ```
  
 +### Append to Daily Note
 +
-+Appends text to today's daily note.
++PR04b adds an `append` command which **writes the daily note Markdown file directly** (no Obsidian URI). The daily note path is derived from per-vault settings in `preferences.json`:
 +
-+This command writes to a daily note path derived from your per-vault settings in `obsidian-cli/preferences.json` (`daily_note.folder` and `daily_note.filename_pattern`). If `daily_note.folder` is not set for the vault, the command will error.
++- `vault_settings.{vault}.daily_note.folder` (required)
++- `vault_settings.{vault}.daily_note.filename_pattern` (optional; defaults to `{YYYY-MM-DD}`)
 +
-+If no text argument is provided, content is read from stdin (piped) or entered interactively until EOF.
++If you omit the `[text]` argument, `append` reads content from stdin (piped) or prompts for multi-line input until EOF (Ctrl-D).
 +
 +```bash
 +# Append a one-liner
 +obsidian-cli append "Meeting notes: discussed roadmap"
 +
-+# Append from stdin
-+echo "Line 1\nLine 2" | obsidian-cli append
++# Multi-line content interactively (Ctrl-D to save, Ctrl-C to cancel)
++obsidian-cli append
 +
-+# Append with timestamp
++# Pipe content
++printf "line1\nline2\n" | obsidian-cli append
++
++# Append with a timestamp prefix (default format 15:04)
 +obsidian-cli append --timestamp "Started work on feature X"
++
++# Append with a custom timestamp format (Go time format)
++obsidian-cli append --timestamp --time-format "15:04:05" "Did the thing"
 +
 +# Append in a specific vault
 +obsidian-cli append --vault "{vault-name}" "Daily standup notes"
 +```
++
++<details>
++<summary><code>append</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli append --help
++Appends text to today's daily note.
++
++This command writes to a daily note path derived from your per-vault settings
++in preferences.json (daily_note.folder and daily_note.filename_pattern).
++
++If no text argument is provided, content is read from stdin (piped) or entered
++interactively until EOF.
++
++Usage:
++  obsidian-cli append [text] [flags]
++
++Aliases:
++  append, a
++
++Examples:
++  # Append a one-liner
++  obsidian-cli append "Meeting notes: discussed roadmap"
++
++  # Append multi-line content interactively (Ctrl-D to save)
++  obsidian-cli append
++
++  # Append with timestamp
++  obsidian-cli append --timestamp "Started work on feature X"
++
++  # Append in a specific vault
++  obsidian-cli append --vault "Work" "Daily standup notes"
++
++Flags:
++  -h, --help                 help for append
++      --time-format string   custom timestamp format (Go time format, default: 15:04)
++  -t, --timestamp            prepend a timestamp to the content
++  -v, --vault string         vault name (not required if default is set)
++```
++
++</details>
 +
  ### Search Note
  
@@ -408,17 +465,14 @@ index 0000000..52de227
 +}
 ```
 
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color pr-04a-settings..pr-04b-append
-```
-
 ## Cumulative Diff (vs origin/main)
 
 Compare: origin/main..pr-04b-append
 
 ### Commits
 ```
+9283b72 fix(delete): use 'del' alias
+3df0531 docs: refresh README (pr-04b-append)
 ffbec38 docs: README document append command
 bb67cc9 feat(append): add daily note append command
 424ac98 fix(config): enforce secure perms on preferences
@@ -435,62 +489,88 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                               |  68 +++++++++++++-
- cmd/append.go                           |  68 ++++++++++++++
- cmd/create.go                           |  35 +++++--
- cmd/delete.go                           |  31 +++++--
- cmd/move.go                             |  31 ++++---
- cmd/open.go                             |  25 +++--
- cmd/print.go                            |  26 +++++-
- cmd/print_default.go                    |  22 +++--
- cmd/search.go                           |  26 ++++--
- cmd/search_content.go                   |  27 ++++--
- cmd/set_default.go                      |  26 ++++--
- pkg/actions/append.go                   | 158 ++++++++++++++++++++++++++++++++
- pkg/actions/append_test.go              |  99 ++++++++++++++++++++
- pkg/actions/delete.go                   |  32 +++++++
+ README.md                               | 242 +++++++++++++++++++++++++++++++-
+ cmd/append.go                           |  68 +++++++++
+ cmd/create.go                           |  35 +++--
+ cmd/delete.go                           |  33 +++--
+ cmd/move.go                             |  31 ++--
+ cmd/open.go                             |  25 ++--
+ cmd/print.go                            |  26 +++-
+ cmd/print_default.go                    |  22 ++-
+ cmd/search.go                           |  26 ++--
+ cmd/search_content.go                   |  27 ++--
+ cmd/set_default.go                      |  26 ++--
+ pkg/actions/append.go                   | 158 +++++++++++++++++++++
+ pkg/actions/append_test.go              |  99 +++++++++++++
+ pkg/actions/delete.go                   |  32 +++++
  pkg/obsidian/note.go                    |  10 +-
- pkg/obsidian/note_test.go               |  78 ++++++++++++++++
- pkg/obsidian/utils.go                   | 142 ++++++++++++++++++++++++++++
- pkg/obsidian/utils_test.go              |  97 ++++++++++++++++++++
- pkg/obsidian/vault.go                   |  18 +++-
- pkg/obsidian/vault_default_name.go      |  99 +++++++++++++++++++-
- pkg/obsidian/vault_default_name_test.go |  14 ++-
- pkg/obsidian/vault_settings_test.go     |  82 +++++++++++++++++
- 22 files changed, 1118 insertions(+), 96 deletions(-)
+ pkg/obsidian/note_test.go               |  78 ++++++++++
+ pkg/obsidian/utils.go                   | 142 +++++++++++++++++++
+ pkg/obsidian/utils_test.go              |  97 +++++++++++++
+ pkg/obsidian/vault.go                   |  18 ++-
+ pkg/obsidian/vault_default_name.go      |  99 ++++++++++++-
+ pkg/obsidian/vault_default_name_test.go |  14 +-
+ pkg/obsidian/vault_settings_test.go     |  82 +++++++++++
+ 22 files changed, 1292 insertions(+), 98 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..f578e5f 100644
+index 591f921..ef11855 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,36 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  append         Append text to today's daily note
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -83,6 +89,26 @@ obsidian-cli set-default "{vault-name}"
+ ## Description
+ 
+@@ -83,6 +112,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
-+The default vault is stored in `obsidian-cli/preferences.json` under your OS user config directory (`os.UserConfigDir()`).
++`set-default` stores the default vault name in `preferences.json` under your OS user config directory (`os.UserConfigDir()`), at:
 +
-+This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration):
++- `obsidian-cli/preferences.json`
++
++PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
 +
 +```json
 +{
@@ -508,82 +588,239 @@ index 591f921..f578e5f 100644
 +}
 +```
 +
++<details>
++<summary><code>set-default</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli set-default --help
++Sets the default vault for all commands.
++
++The vault name must match exactly as it appears in Obsidian.
++Once set, you won't need to specify --vault for each command.
++
++Usage:
++  obsidian-cli set-default <vault> [flags]
++
++Aliases:
++  set-default, sd
++
++Examples:
++  # Set default vault
++  obsidian-cli set-default "My Vault"
++
++  # Verify it worked
++  obsidian-cli print-default
++
++Flags:
++  -h, --help   help for set-default
++```
++
++</details>
++
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
-@@ -132,6 +158,28 @@ obsidian-cli daily --vault "{vault-name}"
+@@ -95,6 +175,35 @@ obsidian-cli print-default
+ obsidian-cli print-default --path-only
+ ```
+ 
++<details>
++<summary><code>print-default</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli print-default --help
++Shows the currently configured default vault.
++
++Use --path-only to output just the path, useful for scripting.
++
++Usage:
++  obsidian-cli print-default [flags]
++
++Aliases:
++  print-default, pd
++
++Examples:
++  # Show default vault info
++  obsidian-cli print-default
++
++  # Get just the path (for scripts)
++  obsidian-cli print-default --path-only
++
++Flags:
++  -h, --help        help for print-default
++      --path-only   print only the vault path
++```
++
++</details>
++
+ You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
+ 
+ ```bash
+@@ -106,6 +215,18 @@ obs_cd() {
+ 
+ Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
+ 
++### Config Files
++
++`obsidian-cli` reads and writes configuration under your OS user config directory (`os.UserConfigDir()`):
++
++- `obsidian-cli/preferences.json` (default vault name + optional per-vault `vault_settings`)
++
++It also reads Obsidian’s vault list from:
++
++- `obsidian/obsidian.json` (Obsidian config, used for vault discovery)
++
++Note: when writing `preferences.json`, the CLI attempts to create the config directory with mode `0750` and the file with mode `0600` (confirmed from `os.MkdirAll(…, 0750)` / `os.WriteFile(…, 0600)` in code).
++
+ ### Open Note
+ 
+ Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
+@@ -121,7 +242,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ 
+ ### Daily Note
+ 
+-Open daily note in Obsidian. It will create one (using template) if one does not exist.
++Open the daily note in Obsidian (via Obsidian URI).
++
++Note: creation/templates are controlled by Obsidian’s daily note settings/plugins.
+ 
+ ```bash
+ # Creates / opens daily note in obsidian vault
+@@ -132,6 +255,76 @@ obsidian-cli daily --vault "{vault-name}"
  
  ```
  
 +### Append to Daily Note
 +
-+Appends text to today's daily note.
++PR04b adds an `append` command which **writes the daily note Markdown file directly** (no Obsidian URI). The daily note path is derived from per-vault settings in `preferences.json`:
 +
-+This command writes to a daily note path derived from your per-vault settings in `obsidian-cli/preferences.json` (`daily_note.folder` and `daily_note.filename_pattern`). If `daily_note.folder` is not set for the vault, the command will error.
++- `vault_settings.{vault}.daily_note.folder` (required)
++- `vault_settings.{vault}.daily_note.filename_pattern` (optional; defaults to `{YYYY-MM-DD}`)
 +
-+If no text argument is provided, content is read from stdin (piped) or entered interactively until EOF.
++If you omit the `[text]` argument, `append` reads content from stdin (piped) or prompts for multi-line input until EOF (Ctrl-D).
 +
 +```bash
 +# Append a one-liner
 +obsidian-cli append "Meeting notes: discussed roadmap"
 +
-+# Append from stdin
-+echo "Line 1\nLine 2" | obsidian-cli append
++# Multi-line content interactively (Ctrl-D to save, Ctrl-C to cancel)
++obsidian-cli append
 +
-+# Append with timestamp
++# Pipe content
++printf "line1\nline2\n" | obsidian-cli append
++
++# Append with a timestamp prefix (default format 15:04)
 +obsidian-cli append --timestamp "Started work on feature X"
++
++# Append with a custom timestamp format (Go time format)
++obsidian-cli append --timestamp --time-format "15:04:05" "Did the thing"
 +
 +# Append in a specific vault
 +obsidian-cli append --vault "{vault-name}" "Daily standup notes"
 +```
 +
++<details>
++<summary><code>append</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli append --help
++Appends text to today's daily note.
++
++This command writes to a daily note path derived from your per-vault settings
++in preferences.json (daily_note.folder and daily_note.filename_pattern).
++
++If no text argument is provided, content is read from stdin (piped) or entered
++interactively until EOF.
++
++Usage:
++  obsidian-cli append [text] [flags]
++
++Aliases:
++  append, a
++
++Examples:
++  # Append a one-liner
++  obsidian-cli append "Meeting notes: discussed roadmap"
++
++  # Append multi-line content interactively (Ctrl-D to save)
++  obsidian-cli append
++
++  # Append with timestamp
++  obsidian-cli append --timestamp "Started work on feature X"
++
++  # Append in a specific vault
++  obsidian-cli append --vault "Work" "Daily standup notes"
++
++Flags:
++  -h, --help                 help for append
++      --time-format string   custom timestamp format (Go time format, default: 15:04)
++  -t, --timestamp            prepend a timestamp to the content
++  -v, --vault string         vault name (not required if default is set)
++```
++
++</details>
++
  ### Search Note
  
  Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
-@@ -210,7 +258,12 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
- 
- ### Move / Rename Note
- 
--Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
-+Moves a given note (path from top level of vault) to a new path. If given the same path but a different name, it's treated as a rename.
-+
-+When moving/renaming, `obsidian-cli` updates links inside your vault to match the new location, including:
-+
-+- Wikilinks: `[[note]]`, `[[folder/note]]`, `[[folder/note|alias]]`, `[[folder/note#heading]]`
-+- Markdown links: `[text](folder/note.md)`, `[text](./folder/note.md)`, and the same forms without the `.md` extension
- 
- ```bash
- # Renames a note in default obsidian
-@@ -230,11 +283,16 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -230,14 +423,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
-+If other notes link to the note, you'll be prompted to confirm. Use `--force` (or `-f`) to skip confirmation.
++If other notes link to the note, `delete` prints the incoming links and prompts for confirmation. The default is **No** (press Enter to cancel).
++
++Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
 +
  ```bash
 -# Renames a note in default obsidian
-+# Delete a note in the default vault
++# Delete a note in default obsidian
  obsidian-cli delete "{note-path}"
  
 -# Renames a note in given obsidian
-+# Force delete without prompt (recommended for scripts)
++# Force delete without prompt
 +obsidian-cli delete "{note-path}" --force
 +
-+# Delete a note in a specific vault
++# Delete a note in given obsidian
  obsidian-cli delete "{note-path}" --vault "{vault-name}"
  ```
  
-@@ -242,6 +300,10 @@ obsidian-cli delete "{note-path}" --vault "{vault-name}"
++<details>
++<summary><code>delete</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli delete --help
++Delete a note from the vault.
++
++If other notes link to the note, you'll be prompted to confirm.
++Use --force to skip confirmation (recommended for scripts).
++
++Usage:
++  obsidian-cli delete <note> [flags]
++
++Aliases:
++  delete, del
++
++Examples:
++  # Delete a note (prompts if linked)
++  obsidian-cli delete "old-note"
++
++  # Force delete without prompt
++  obsidian-cli delete "temp" --force
++
++  # Delete from specific vault
++  obsidian-cli delete "note" --vault "Archive"
++
++Flags:
++  -f, --force          skip confirmation if the note has incoming links
++  -h, --help           help for delete
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ## Contribution
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
- 
-+## Acknowledgements
-+
-+- Link-update support for path-based wikilinks and markdown links builds on upstream PR #58: https://github.com/Yakitrak/obsidian-cli/pull/58
-+
- ## License
- 
- Available under [MIT License](./LICENSE)
 diff --git a/cmd/append.go b/cmd/append.go
 new file mode 100644
 index 0000000..cf40752
@@ -728,7 +965,7 @@ index 338dcc9..f283518 100644
  }
  
 diff --git a/cmd/delete.go b/cmd/delete.go
-index f29f691..541c08e 100644
+index f29f691..6a0b63e 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
 @@ -3,30 +3,43 @@ package cmd
@@ -744,8 +981,9 @@ index f29f691..541c08e 100644
 +
  var deleteCmd = &cobra.Command{
 -	Use:     "delete",
+-	Aliases: []string{"d"},
 +	Use:     "delete <note>",
- 	Aliases: []string{"d"},
++	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
 -	Args:    cobra.ExactArgs(1),
 -	Run: func(cmd *cobra.Command, args []string) {
@@ -2169,9 +2407,4 @@ index 0000000..f6dd5ff
 +	assert.Contains(t, updated.VaultSettings, "Example Vault")
 +	assert.Equal(t, "Daily", updated.VaultSettings["Example Vault"].DailyNote.Folder)
 +}
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-04b-append
 ```

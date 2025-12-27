@@ -1,8 +1,8 @@
 # pr-04a-settings
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-03-delete (e4d1520abef309da7c33da2ea978d5424a8ba9bf)
-This PR: pr-04a-settings (424ac9815db5626cea2c3c9c9726e01eda8a1539)
+Previous: pr-03-delete (c20affdfe1aad365e123839c2fc8c1d299cf4786)
+This PR: pr-04a-settings (90073194af6ef5d8a39abbeee45a2c2dd70e0257)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,6 +10,8 @@ Compare: pr-03-delete..pr-04a-settings
 
 ### Commits
 ```
+9007319 fix(delete): use 'del' alias
+e05d883 docs: refresh README (pr-04a-settings)
 424ac98 fix(config): enforce secure perms on preferences
 f7cb7ea docs: README mention preferences.json and per-vault settings
 4f2a0a8 feat(config): add per-vault settings to preferences.json
@@ -17,32 +19,33 @@ f7cb7ea docs: README mention preferences.json and per-vault settings
 
 ### Diff Stat (all files)
 ```
- README.md                               | 20 +++++++
+ README.md                               | 92 ++++++++++++++++++++++++++++++
  pkg/obsidian/vault.go                   | 18 +++++-
  pkg/obsidian/vault_default_name.go      | 99 +++++++++++++++++++++++++++++++--
  pkg/obsidian/vault_default_name_test.go | 14 +++--
  pkg/obsidian/vault_settings_test.go     | 82 +++++++++++++++++++++++++++
- 5 files changed, 224 insertions(+), 9 deletions(-)
+ 5 files changed, 296 insertions(+), 9 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 202e15c..f59fd15 100644
+index e684a37..3faa817 100644
 --- a/README.md
 +++ b/README.md
-@@ -89,6 +89,26 @@ obsidian-cli set-default "{vault-name}"
+@@ -111,6 +111,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
-+The default vault is stored in `obsidian-cli/preferences.json` under your OS user config directory (`os.UserConfigDir()`).
++`set-default` stores the default vault name in `preferences.json` under your OS user config directory (`os.UserConfigDir()`), at:
 +
-+This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration):
++- `obsidian-cli/preferences.json`
++
++PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
 +
 +```json
 +{
@@ -60,9 +63,93 @@ index 202e15c..f59fd15 100644
 +}
 +```
 +
++<details>
++<summary><code>set-default</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli set-default --help
++Sets the default vault for all commands.
++
++The vault name must match exactly as it appears in Obsidian.
++Once set, you won't need to specify --vault for each command.
++
++Usage:
++  obsidian-cli set-default <vault> [flags]
++
++Aliases:
++  set-default, sd
++
++Examples:
++  # Set default vault
++  obsidian-cli set-default "My Vault"
++
++  # Verify it worked
++  obsidian-cli print-default
++
++Flags:
++  -h, --help   help for set-default
++```
++
++</details>
++
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
+@@ -123,6 +174,35 @@ obsidian-cli print-default
+ obsidian-cli print-default --path-only
+ ```
+ 
++<details>
++<summary><code>print-default</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli print-default --help
++Shows the currently configured default vault.
++
++Use --path-only to output just the path, useful for scripting.
++
++Usage:
++  obsidian-cli print-default [flags]
++
++Aliases:
++  print-default, pd
++
++Examples:
++  # Show default vault info
++  obsidian-cli print-default
++
++  # Get just the path (for scripts)
++  obsidian-cli print-default --path-only
++
++Flags:
++  -h, --help        help for print-default
++      --path-only   print only the vault path
++```
++
++</details>
++
+ You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
+ 
+ ```bash
+@@ -134,6 +214,18 @@ obs_cd() {
+ 
+ Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
+ 
++### Config Files
++
++`obsidian-cli` reads and writes configuration under your OS user config directory (`os.UserConfigDir()`):
++
++- `obsidian-cli/preferences.json` (default vault name + optional per-vault `vault_settings`)
++
++It also reads Obsidian’s vault list from:
++
++- `obsidian/obsidian.json` (Obsidian config, used for vault discovery)
++
++Note: when writing `preferences.json`, the CLI attempts to create the config directory with mode `0750` and the file with mode `0600` (confirmed from `os.MkdirAll(…, 0750)` / `os.WriteFile(…, 0600)` in code).
++
+ ### Open Note
+ 
+ Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
 diff --git a/pkg/obsidian/vault.go b/pkg/obsidian/vault.go
 index cace38c..ce5f545 100644
 --- a/pkg/obsidian/vault.go
@@ -349,17 +436,14 @@ index 0000000..f6dd5ff
 +}
 ```
 
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color pr-03-delete..pr-04a-settings
-```
-
 ## Cumulative Diff (vs origin/main)
 
 Compare: origin/main..pr-04a-settings
 
 ### Commits
 ```
+9007319 fix(delete): use 'del' alias
+e05d883 docs: refresh README (pr-04a-settings)
 424ac98 fix(config): enforce secure perms on preferences
 f7cb7ea docs: README mention preferences.json and per-vault settings
 4f2a0a8 feat(config): add per-vault settings to preferences.json
@@ -374,59 +458,84 @@ d9d3fa9 feat(cli): improve help and error handling
 
 ### Diff Stat (all files)
 ```
- README.md                               |  46 ++++++++++-
- cmd/create.go                           |  35 ++++++--
- cmd/delete.go                           |  31 +++++--
- cmd/move.go                             |  31 ++++---
- cmd/open.go                             |  25 ++++--
- cmd/print.go                            |  26 ++++--
- cmd/print_default.go                    |  22 +++--
- cmd/search.go                           |  26 ++++--
- cmd/search_content.go                   |  27 ++++--
- cmd/set_default.go                      |  26 ++++--
- pkg/actions/delete.go                   |  32 +++++++
- pkg/obsidian/note.go                    |  10 +--
- pkg/obsidian/note_test.go               |  78 ++++++++++++++++++
- pkg/obsidian/utils.go                   | 142 ++++++++++++++++++++++++++++++++
- pkg/obsidian/utils_test.go              |  97 ++++++++++++++++++++++
+ README.md                               | 171 +++++++++++++++++++++++++++++++-
+ cmd/create.go                           |  35 +++++--
+ cmd/delete.go                           |  33 ++++--
+ cmd/move.go                             |  31 ++++--
+ cmd/open.go                             |  25 +++--
+ cmd/print.go                            |  26 ++++-
+ cmd/print_default.go                    |  22 ++--
+ cmd/search.go                           |  26 +++--
+ cmd/search_content.go                   |  27 +++--
+ cmd/set_default.go                      |  26 +++--
+ pkg/actions/delete.go                   |  32 ++++++
+ pkg/obsidian/note.go                    |  10 +-
+ pkg/obsidian/note_test.go               |  78 +++++++++++++++
+ pkg/obsidian/utils.go                   | 142 ++++++++++++++++++++++++++
+ pkg/obsidian/utils_test.go              |  97 ++++++++++++++++++
  pkg/obsidian/vault.go                   |  18 +++-
- pkg/obsidian/vault_default_name.go      |  99 +++++++++++++++++++++-
- pkg/obsidian/vault_default_name_test.go |  14 +++-
- pkg/obsidian/vault_settings_test.go     |  82 ++++++++++++++++++
- 19 files changed, 771 insertions(+), 96 deletions(-)
+ pkg/obsidian/vault_default_name.go      |  99 +++++++++++++++++-
+ pkg/obsidian/vault_default_name_test.go |  14 ++-
+ pkg/obsidian/vault_settings_test.go     |  82 +++++++++++++++
+ 19 files changed, 896 insertions(+), 98 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
 ```
-
 ```
 
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..f59fd15 100644
+index 591f921..3faa817 100644
 --- a/README.md
 +++ b/README.md
-@@ -48,6 +48,12 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
- obsidian-cli --help
- ```
+@@ -2,7 +2,35 @@
  
-+For detailed help (including examples) for a specific command:
+ ---
+ 
+-## ![obsidian-cli Usage](./docs/usage.png)
++## CLI Help (Generated)
 +
-+```bash
-+obsidian-cli <command> --help
++```text
++$ obsidian-cli --help
++obsidian-cli - CLI to open, search, move, create, delete and update notes
++
++Usage:
++  obsidian-cli [command]
++
++Available Commands:
++  completion     Generate the autocompletion script for the specified shell
++  create         Creates note in vault
++  daily          Creates or opens daily note in vault
++  delete         Delete note in vault
++  help           Help about any command
++  move           Move or rename note in vault and update corresponding links
++  open           Opens note in vault by note name
++  print          Print contents of note
++  print-default  Prints default vault name and path
++  search         Fuzzy searches and opens note in vault
++  search-content Search note content for search term
++  set-default    Sets default vault
++
++Flags:
++  -h, --help      help for obsidian-cli
++  -v, --version   version for obsidian-cli
++
++Use "obsidian-cli [command] --help" for more information about a command.
 +```
-+
- ### Editor Flag
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -83,6 +89,26 @@ obsidian-cli set-default "{vault-name}"
+ ## Description
+ 
+@@ -83,6 +111,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
-+The default vault is stored in `obsidian-cli/preferences.json` under your OS user config directory (`os.UserConfigDir()`).
++`set-default` stores the default vault name in `preferences.json` under your OS user config directory (`os.UserConfigDir()`), at:
 +
-+This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration):
++- `obsidian-cli/preferences.json`
++
++PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
 +
 +```json
 +{
@@ -444,53 +553,162 @@ index 591f921..f59fd15 100644
 +}
 +```
 +
++<details>
++<summary><code>set-default</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli set-default --help
++Sets the default vault for all commands.
++
++The vault name must match exactly as it appears in Obsidian.
++Once set, you won't need to specify --vault for each command.
++
++Usage:
++  obsidian-cli set-default <vault> [flags]
++
++Aliases:
++  set-default, sd
++
++Examples:
++  # Set default vault
++  obsidian-cli set-default "My Vault"
++
++  # Verify it worked
++  obsidian-cli print-default
++
++Flags:
++  -h, --help   help for set-default
++```
++
++</details>
++
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
-@@ -210,7 +236,12 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -95,6 +174,35 @@ obsidian-cli print-default
+ obsidian-cli print-default --path-only
+ ```
  
- ### Move / Rename Note
- 
--Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
-+Moves a given note (path from top level of vault) to a new path. If given the same path but a different name, it's treated as a rename.
++<details>
++<summary><code>print-default</code> command reference (help, flags, aliases)</summary>
 +
-+When moving/renaming, `obsidian-cli` updates links inside your vault to match the new location, including:
++```text
++$ obsidian-cli print-default --help
++Shows the currently configured default vault.
 +
-+- Wikilinks: `[[note]]`, `[[folder/note]]`, `[[folder/note|alias]]`, `[[folder/note#heading]]`
-+- Markdown links: `[text](folder/note.md)`, `[text](./folder/note.md)`, and the same forms without the `.md` extension
++Use --path-only to output just the path, useful for scripting.
++
++Usage:
++  obsidian-cli print-default [flags]
++
++Aliases:
++  print-default, pd
++
++Examples:
++  # Show default vault info
++  obsidian-cli print-default
++
++  # Get just the path (for scripts)
++  obsidian-cli print-default --path-only
++
++Flags:
++  -h, --help        help for print-default
++      --path-only   print only the vault path
++```
++
++</details>
++
+ You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
  
  ```bash
- # Renames a note in default obsidian
-@@ -230,11 +261,16 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -106,6 +214,18 @@ obs_cd() {
+ 
+ Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
+ 
++### Config Files
++
++`obsidian-cli` reads and writes configuration under your OS user config directory (`os.UserConfigDir()`):
++
++- `obsidian-cli/preferences.json` (default vault name + optional per-vault `vault_settings`)
++
++It also reads Obsidian’s vault list from:
++
++- `obsidian/obsidian.json` (Obsidian config, used for vault discovery)
++
++Note: when writing `preferences.json`, the CLI attempts to create the config directory with mode `0750` and the file with mode `0600` (confirmed from `os.MkdirAll(…, 0750)` / `os.WriteFile(…, 0600)` in code).
++
+ ### Open Note
+ 
+ Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
+@@ -121,7 +241,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ 
+ ### Daily Note
+ 
+-Open daily note in Obsidian. It will create one (using template) if one does not exist.
++Open the daily note in Obsidian (via Obsidian URI).
++
++Note: creation/templates are controlled by Obsidian’s daily note settings/plugins.
+ 
+ ```bash
+ # Creates / opens daily note in obsidian vault
+@@ -230,14 +352,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
-+If other notes link to the note, you'll be prompted to confirm. Use `--force` (or `-f`) to skip confirmation.
++If other notes link to the note, `delete` prints the incoming links and prompts for confirmation. The default is **No** (press Enter to cancel).
++
++Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
 +
  ```bash
 -# Renames a note in default obsidian
-+# Delete a note in the default vault
++# Delete a note in default obsidian
  obsidian-cli delete "{note-path}"
  
 -# Renames a note in given obsidian
-+# Force delete without prompt (recommended for scripts)
++# Force delete without prompt
 +obsidian-cli delete "{note-path}" --force
 +
-+# Delete a note in a specific vault
++# Delete a note in given obsidian
  obsidian-cli delete "{note-path}" --vault "{vault-name}"
  ```
  
-@@ -242,6 +278,10 @@ obsidian-cli delete "{note-path}" --vault "{vault-name}"
++<details>
++<summary><code>delete</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli delete --help
++Delete a note from the vault.
++
++If other notes link to the note, you'll be prompted to confirm.
++Use --force to skip confirmation (recommended for scripts).
++
++Usage:
++  obsidian-cli delete <note> [flags]
++
++Aliases:
++  delete, del
++
++Examples:
++  # Delete a note (prompts if linked)
++  obsidian-cli delete "old-note"
++
++  # Force delete without prompt
++  obsidian-cli delete "temp" --force
++
++  # Delete from specific vault
++  obsidian-cli delete "note" --vault "Archive"
++
++Flags:
++  -f, --force          skip confirmation if the note has incoming links
++  -h, --help           help for delete
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ## Contribution
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
- 
-+## Acknowledgements
-+
-+- Link-update support for path-based wikilinks and markdown links builds on upstream PR #58: https://github.com/Yakitrak/obsidian-cli/pull/58
-+
- ## License
- 
- Available under [MIT License](./LICENSE)
 diff --git a/cmd/create.go b/cmd/create.go
 index 338dcc9..f283518 100644
 --- a/cmd/create.go
@@ -561,7 +779,7 @@ index 338dcc9..f283518 100644
  }
  
 diff --git a/cmd/delete.go b/cmd/delete.go
-index f29f691..541c08e 100644
+index f29f691..6a0b63e 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
 @@ -3,30 +3,43 @@ package cmd
@@ -577,8 +795,9 @@ index f29f691..541c08e 100644
 +
  var deleteCmd = &cobra.Command{
 -	Use:     "delete",
+-	Aliases: []string{"d"},
 +	Use:     "delete <note>",
- 	Aliases: []string{"d"},
++	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
 -	Args:    cobra.ExactArgs(1),
 -	Run: func(cmd *cobra.Command, args []string) {
@@ -1733,9 +1952,4 @@ index 0000000..f6dd5ff
 +	assert.Contains(t, updated.VaultSettings, "Example Vault")
 +	assert.Equal(t, "Daily", updated.VaultSettings["Example Vault"].DailyNote.Folder)
 +}
-```
-
-### Full Diff Command (includes vendor/)
-```
-git diff --no-color origin/main..pr-04a-settings
 ```
