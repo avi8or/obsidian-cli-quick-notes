@@ -12,11 +12,13 @@ Usage:
   obsidian-cli [command]
 
 Available Commands:
+  alias          Generate a shell alias snippet or install a symlink shortcut
   append         Append text to today's daily note
   completion     Generate the autocompletion script for the specified shell
   create         Creates note in vault
   daily          Creates or opens daily note in vault
   delete         Delete note in vault
+  frontmatter    View or modify note frontmatter
   help           Help about any command
   init           Interactive setup wizard
   move           Move or rename note in vault and update corresponding links
