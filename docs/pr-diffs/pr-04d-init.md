@@ -1,8 +1,8 @@
 # pr-04d-init
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-04b-append (9283b72917c6b8e36b750760eae7dbac14176bdb)
-This PR: pr-04d-init (368d30e2b4f8067da8371669e56acf755bf475f9)
+Previous: pr-04b-append (900d9baec9c05b5d63d7fe6999ee7509ddcbe782)
+This PR: pr-04d-init (226e6c873e833c61a03558231a21dc6d6f918d3c)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,44 +10,53 @@ Compare: pr-04b-append..pr-04d-init
 
 ### Commits
 ```
-368d30e feat(append): select target via --select/--ls
-f1ace11 docs: add versioning note (pr-04d-init)
-ff8b673 docs: refresh README (pr-04d-init)
-6dd855a docs: note PR #59 compatibility
-3e18c90 docs: README document frontmatter command
-8328d62 feat: add frontmatter command for viewing and editing note metadata
-abe0d27 docs: dedupe append section in README
-e62b1ce docs: add acknowledgements for link-update work
-5944219 docs: add target/remove/test and append time-format examples
-3a7c61d docs: update README for init/append/targets and dry-run
-a3c3925 chore(cli): improve usage/help text
-d620abc feat(cli): add dry-run to append/daily/delete
-e3b0c36 feat(target): improve edit prompt
-3dd21b8 feat(wizard): add back/skip/help prompts
-9a1978f fix(init): add wizard UI helpers
-42593c8 feat(append): apply daily note template on create
-c057fd0 chore(target): preserve targets.yaml header on save
-19a9236 feat(cli): add interactive target editor
-db563c8 feat(cli): add target command
-3b02b16 feat(target): add targets config and execution
-0c25360 feat(obsidian): support obsidian-style date patterns
+226e6c8 docs: update README for note picker and targets
+39a9c56 feat(target): allow invoking targets by name
+f083982 feat: add --ls/--select note picker
+a251ea4 feat(append): select target via --select/--ls
+b177d5d docs: add versioning note (pr-04d-init)
+1f4a6eb docs: refresh README (pr-04d-init)
+a6934da docs: note PR #59 compatibility
+52f8fdb docs: README document frontmatter command
+9eb89f6 feat: add frontmatter command for viewing and editing note metadata
+6b4e28b docs: dedupe append section in README
+1263511 docs: add acknowledgements for link-update work
+783807c docs: add target/remove/test and append time-format examples
+dbadbf1 docs: update README for init/append/targets and dry-run
+7625bce chore(cli): improve usage/help text
+4eb45d1 feat(cli): add dry-run to append/daily/delete
+5be92e6 feat(target): improve edit prompt
+b41c946 feat(wizard): add back/skip/help prompts
+469f685 fix(init): add wizard UI helpers
+4787252 feat(append): apply daily note template on create
+0bf2948 chore(target): preserve targets.yaml header on save
+2aaafd0 feat(cli): add interactive target editor
+b5740c7 feat(cli): add target command
+aff3c5b feat(target): add targets config and execution
+368ef12 feat(obsidian): support obsidian-style date patterns
+50c1a11 docs: README document delete confirmation and --force
+abe6eb2 docs: acknowledge upstream PR #58 for link updates
+382b61c docs: README clarify move link updates
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  353 ++-
+ README.md                                          |  601 ++++-
  cmd/append.go                                      |  101 +-
- cmd/create.go                                      |    2 +-
+ cmd/create.go                                      |   29 +-
  cmd/daily.go                                       |   21 +-
- cmd/delete.go                                      |   17 +-
- cmd/frontmatter.go                                 |   65 +
+ cmd/delete.go                                      |   48 +-
+ cmd/frontmatter.go                                 |   92 +
  cmd/init.go                                        |  734 ++++++
- cmd/move.go                                        |    2 +-
- cmd/open.go                                        |    2 +-
- cmd/print.go                                       |    2 +-
+ cmd/move.go                                        |   67 +-
+ cmd/note_picker.go                                 |  103 +
+ cmd/open.go                                        |   32 +-
+ cmd/print.go                                       |   29 +-
+ cmd/root.go                                        |   42 +
+ cmd/search.go                                      |   38 +-
  cmd/search_content.go                              |    2 +-
  cmd/set_default.go                                 |    2 +-
- cmd/target.go                                      | 1325 ++++++++++
+ cmd/target.go                                      | 1326 ++++++++++
  cmd/wizard_prompt.go                               |   44 +
  cmd/wizard_ui.go                                   |   28 +
  go.mod                                             |    3 +
@@ -119,7 +128,7 @@ db563c8 feat(cli): add target command
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 84 files changed, 18644 insertions(+), 91 deletions(-)
+ 87 files changed, 19261 insertions(+), 113 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -173,10 +182,10 @@ db563c8 feat(cli): add target command
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index ef11855..4a91bf8 100644
+index 58ff503..6b0d9f2 100644
 --- a/README.md
 +++ b/README.md
-@@ -18,6 +18,7 @@ Available Commands:
+@@ -19,6 +19,7 @@ Available Commands:
    daily          Creates or opens daily note in vault
    delete         Delete note in vault
    help           Help about any command
@@ -184,7 +193,7 @@ index ef11855..4a91bf8 100644
    move           Move or rename note in vault and update corresponding links
    open           Opens note in vault by note name
    print          Print contents of note
-@@ -25,6 +26,7 @@ Available Commands:
+@@ -26,6 +27,7 @@ Available Commands:
    search         Fuzzy searches and opens note in vault
    search-content Search note content for search term
    set-default    Sets default vault
@@ -192,7 +201,7 @@ index ef11855..4a91bf8 100644
  
  Flags:
    -h, --help      help for obsidian-cli
-@@ -35,8 +37,18 @@ Use "obsidian-cli [command] --help" for more information about a command.
+@@ -36,8 +38,18 @@ Use "obsidian-cli [command] --help" for more information about a command.
  
  ## Description
  
@@ -213,18 +222,20 @@ index ef11855..4a91bf8 100644
  
  ---
  
-@@ -77,6 +89,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
+@@ -78,12 +90,60 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
  obsidian-cli --help
  ```
  
+-For detailed help (including examples) for a specific command:
 +### Quickstart (Recommended)
 +
 +Run the interactive wizard:
-+
-+```bash
+ 
+ ```bash
+-obsidian-cli <command> --help
 +obsidian-cli init
-+```
-+
+ ```
+ 
 +The wizard:
 +
 +- Selects and saves your default vault (`set-default`)
@@ -264,13 +275,17 @@ index ef11855..4a91bf8 100644
 +- `append` and `target` read content from stdin (piped), or prompt for multi-line input until EOF (Ctrl-D to save, Ctrl-C to cancel).
 +- `target add` runs a guided workflow when you omit the `[name]`.
 +- `delete` prompts for confirmation if the note has incoming links (use `--force` to skip).
++- `open`, `create`, and `print` can prompt you to pick a note (or type a new one) when you omit the note path.
++- `delete`, `frontmatter`, and `move` support `--ls` / `--select` to pick an existing note interactively.
 +
-+The fuzzy finder (used by `search`, `search-content`, `init`, and `target --select`) lets you type to filter, then press Enter to choose a result. Press Esc, Ctrl-C, or Ctrl-D to abort the selection.
++The fuzzy finder (used by `search`, `search-content`, `open`, `create`, `print`, `frontmatter --ls`, `delete --ls`, `move --ls`, and `target --select`) lets you type to filter, then press Enter to choose a result. Press Esc, Ctrl-C, or Ctrl-D to abort the selection.
 +
- ### Editor Flag
++In the note picker used by `search`, `open`, and `create`, there’s a “Create new note…” option which lets you choose an existing folder (or create a new folder), then type the note name.
++
+ ### Command Shortcut (Alias)
  
- The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -220,6 +282,7 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
+ If you want a shorter command name (for example `obsi`), you can either:
+@@ -244,6 +304,7 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
  `obsidian-cli` reads and writes configuration under your OS user config directory (`os.UserConfigDir()`):
  
  - `obsidian-cli/preferences.json` (default vault name + optional per-vault `vault_settings`)
@@ -278,16 +293,61 @@ index ef11855..4a91bf8 100644
  
  It also reads Obsidian’s vault list from:
  
-@@ -229,7 +292,7 @@ Note: when writing `preferences.json`, the CLI attempts to create the config dir
+@@ -253,22 +314,60 @@ Note: when writing `preferences.json`, the CLI attempts to create the config dir
  
  ### Open Note
  
 -Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
-+Open a note in Obsidian by vault-relative note path.
++Open a note in Obsidian by vault-relative note path (or pick one interactively with `--ls` / `--select`).
  
  ```bash
  # Opens note in obsidian vault
-@@ -244,7 +307,7 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ obsidian-cli open "{note-name}"
+ 
++# Pick (or create) a note path interactively
++obsidian-cli open --ls
++
+ # Opens note in specified obsidian vault
+ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ 
+ ```
+ 
++<details>
++<summary><code>open</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli open --help
++Opens a note in Obsidian by name or path.
++
++The note name can be just the filename or a path relative to the vault root.
++The .md extension is optional.
++
++Usage:
++  obsidian-cli open [note-path] [flags]
++
++Aliases:
++  open, o
++
++Examples:
++  # Open a note by name
++  obsidian-cli open "Meeting Notes"
++
++  # Open a note in a subfolder
++  obsidian-cli open "Projects/my-project"
++
++  # Open in a specific vault
++  obsidian-cli open "Daily" --vault "Work"
++
++Flags:
++  -h, --help           help for open
++      --ls             select a note interactively
++      --select         select a note interactively
++  -v, --vault string   vault name (not required if default is set)
++```
++
++</details>
++
+ ### Daily Note
  
  Open the daily note in Obsidian (via Obsidian URI).
  
@@ -296,7 +356,7 @@ index ef11855..4a91bf8 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -253,16 +316,18 @@ obsidian-cli daily
+@@ -277,16 +376,18 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -319,7 +379,7 @@ index ef11855..4a91bf8 100644
  
  ```bash
  # Append a one-liner
-@@ -271,15 +336,22 @@ obsidian-cli append "Meeting notes: discussed roadmap"
+@@ -295,15 +396,22 @@ obsidian-cli append "Meeting notes: discussed roadmap"
  # Multi-line content interactively (Ctrl-D to save, Ctrl-C to cancel)
  obsidian-cli append
  
@@ -344,7 +404,7 @@ index ef11855..4a91bf8 100644
  # Append in a specific vault
  obsidian-cli append --vault "{vault-name}" "Daily standup notes"
  ```
-@@ -294,6 +366,8 @@ Appends text to today's daily note.
+@@ -318,6 +426,8 @@ Appends text to today's daily note.
  This command writes to a daily note path derived from your per-vault settings
  in preferences.json (daily_note.folder and daily_note.filename_pattern).
  
@@ -353,7 +413,7 @@ index ef11855..4a91bf8 100644
  If no text argument is provided, content is read from stdin (piped) or entered
  interactively until EOF.
  
-@@ -310,6 +384,9 @@ Examples:
+@@ -334,6 +444,9 @@ Examples:
    # Append multi-line content interactively (Ctrl-D to save)
    obsidian-cli append
  
@@ -363,7 +423,7 @@ index ef11855..4a91bf8 100644
    # Append with timestamp
    obsidian-cli append --timestamp "Started work on feature X"
  
-@@ -317,7 +394,10 @@ Examples:
+@@ -341,7 +454,10 @@ Examples:
    obsidian-cli append --vault "Work" "Daily standup notes"
  
  Flags:
@@ -374,7 +434,7 @@ index ef11855..4a91bf8 100644
        --time-format string   custom timestamp format (Go time format, default: 15:04)
    -t, --timestamp            prepend a timestamp to the content
    -v, --vault string         vault name (not required if default is set)
-@@ -325,6 +405,233 @@ Flags:
+@@ -349,9 +465,245 @@ Flags:
  
  </details>
  
@@ -392,6 +452,12 @@ index ef11855..4a91bf8 100644
 +```bash
 +# Guided target creation workflow
 +obsidian-cli target add
++
++# Short alias for `target`
++obsidian-cli t inbox "Buy milk"
++
++# You can also invoke a target name directly (the CLI routes it to `target <name> ...`)
++obsidian-cli inbox "Buy milk"
 +
 +# Capture a one-liner to a target
 +obsidian-cli target inbox "Buy milk"
@@ -473,6 +539,9 @@ index ef11855..4a91bf8 100644
 +Usage:
 +  obsidian-cli target [id] [text] [flags]
 +  obsidian-cli target [command]
++
++Aliases:
++  target, t
 +
 +Examples:
 +  # Append a one-liner to a target
@@ -607,9 +676,70 @@ index ef11855..4a91bf8 100644
 +
  ### Search Note
  
- Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
-@@ -375,13 +682,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+-Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
++Starts a fuzzy search displaying notes in the terminal from the vault. Press Enter on a note to open it in Obsidian (or choose “Create new note…” to pick/create a folder and type a new note name).
  
+ ```bash
+ # Searches in default obsidian vault
+@@ -383,12 +735,15 @@ obsidian-cli search-content "search term" --editor
+ 
+ ### Print Note
+ 
+-Prints the contents of given note name or path in Obsidian.
++Prints the contents of a note to stdout (useful for piping to other commands).
+ 
+ ```bash
+ # Prints note in default vault
+ obsidian-cli print "{note-name}"
+ 
++# Pick a note interactively
++obsidian-cli print --ls
++
+ # Prints note by path in default vault
+ obsidian-cli print "{note-path}"
+ 
+@@ -397,15 +752,58 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+ 
+ ```
+ 
++<details>
++<summary><code>print</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli print --help
++Prints the contents of a note to stdout.
++
++Useful for piping note contents to other commands, or quickly viewing
++a note without opening Obsidian.
++
++Usage:
++  obsidian-cli print [note-path] [flags]
++
++Aliases:
++  print, p
++
++Examples:
++  # Print a note
++  obsidian-cli print "Meeting Notes"
++
++  # Print note in subfolder
++  obsidian-cli print "Projects/readme"
++
++  # Pipe to grep
++  obsidian-cli print "Todo" | grep "TODO"
++
++  # Copy to clipboard (macOS)
++  obsidian-cli print "Template" | pbcopy
++
++Flags:
++  -h, --help           help for print
++      --ls             select a note interactively
++      --select         select a note interactively
++  -v, --vault string   vault name
++```
++
++</details>
++
  ### Create / Update Note
  
 -Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note.
@@ -623,20 +753,184 @@ index ef11855..4a91bf8 100644
  obsidian-cli create "{note-name}"
  
 -# Creates empty note in given obsidian and opens it
++# Pick (or create) a note path interactively
++obsidian-cli create --ls
++
 +# Creates empty note in given obsidian
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -405,6 +714,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -425,24 +823,166 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
- Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
+ ```
  
-+Note: `--editor` only applies when `--open` is also provided.
++<details>
++<summary><code>create</code> command reference (help, flags, aliases)</summary>
 +
++```text
++$ obsidian-cli create --help
++Creates a new note in your Obsidian vault.
++
++By default, if the note already exists, Obsidian will create a new note
++with a numeric suffix. Use --append to add to an existing note, or
++--overwrite to replace its contents.
++
++Usage:
++  obsidian-cli create [note-path] [flags]
++
++Aliases:
++  create, c
++
++Examples:
++  # Create an empty note
++  obsidian-cli create "New Note"
++
++  # Create with content
++  obsidian-cli create "Ideas" --content "My brilliant idea"
++
++  # Append to existing note
++  obsidian-cli create "Log" --content "Entry" --append
++
++  # Create and open in Obsidian
++  obsidian-cli create "Draft" --open
++
++  # Create and open in $EDITOR
++  obsidian-cli create "Draft" --open --editor
++
++Flags:
++  -a, --append           append to note
++  -c, --content string   text to add to note
++  -e, --editor           open in editor instead of Obsidian (requires --open flag)
++  -h, --help             help for create
++      --ls               select a note interactively
++      --open             open created note
++  -o, --overwrite        overwrite note
++      --select           select a note interactively
++  -v, --vault string     vault name
++```
++
++</details>
++
+ ### Move / Rename Note
+ 
+-Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
++Moves a note to a new path (or renames it) and updates links inside the vault to match.
++
++Note: `--editor` only applies when `--open` is also provided.
+ 
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -428,14 +739,17 @@ If other notes link to the note, `delete` prints the incoming links and prompts
+ 
++# Pick the note to move interactively
++obsidian-cli move --ls "{new-note-path}"
++
+ # Renames a note and given obsidian
+ obsidian-cli move "{current-note-path}" "{new-note-path}" --vault "{vault-name}"
+ 
+ # Renames a note in default obsidian and opens it
+ obsidian-cli move "{current-note-path}" "{new-note-path}" --open
+ 
+-# Renames a note and opens it in your default editor
+-obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
++	# Renames a note and opens it in your default editor
++	obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
++```
++
++<details>
++<summary><code>move</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli move --help
++Moves or renames a note and updates all links pointing to it.
++
++This command safely renames notes by also updating any [[wikilinks]]
++or [markdown](links) that reference the moved note.
++
++Usage:
++  obsidian-cli move [from-note-path] [to-note-path] [flags]
++
++Aliases:
++  move, m
++
++Examples:
++  # Rename a note
++  obsidian-cli move "Old Name" "New Name"
++
++  # Move to a different folder
++  obsidian-cli move "Inbox/note" "Projects/note"
++
++  # Move and open the result
++  obsidian-cli move "temp" "Archive/temp" --open
++
++Flags:
++  -e, --editor         open in editor instead of Obsidian (requires --open flag)
++  -h, --help           help for move
++      --ls             select the note to move interactively
++  -o, --open           open new note
++      --select         select the note to move interactively
++  -v, --vault string   vault name
++```
++
++</details>
++
++### Frontmatter
++
++View or edit a note’s YAML frontmatter.
++
++```bash
++# Print frontmatter
++obsidian-cli frontmatter "My Note" --print
++
++# Edit a key
++obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
++
++# Delete a key
++obsidian-cli frontmatter "My Note" --delete --key "draft"
++
++# Pick a note interactively
++obsidian-cli frontmatter --ls
+ ```
+ 
++<details>
++<summary><code>frontmatter</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli frontmatter --help
++View or modify YAML frontmatter in a note.
++
++Use --print to display frontmatter, --edit to modify a key,
++or --delete to remove a key.
++
++Examples:
++  obsidian-cli frontmatter "My Note" --print
++  obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
++  obsidian-cli frontmatter "My Note" --delete --key "draft"
++
++Usage:
++  obsidian-cli frontmatter [note] [flags]
++
++Aliases:
++  frontmatter, fm
++
++Flags:
++  -d, --delete         delete a frontmatter key
++  -e, --edit           edit a frontmatter key
++  -h, --help           help for frontmatter
++  -k, --key string     key to edit or delete
++      --ls             select a note interactively
++  -p, --print          print frontmatter
++      --select         select a note interactively
++      --value string   value to set (required for --edit)
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ### Delete Note
+ 
+ Deletes a given note (path from top level of vault).
+@@ -452,14 +992,20 @@ If other notes link to the note, `delete` prints the incoming links and prompts
  Use `--force` (`-f`) to skip confirmation (recommended for scripts). Alias: `delete, del`. Heads up: `daily` uses alias `d`, so `delete` uses `del` to avoid ambiguity.
  
  ```bash
@@ -644,6 +938,9 @@ index ef11855..4a91bf8 100644
 +# Delete a note in default obsidian vault
  obsidian-cli delete "{note-path}"
  
++# Pick a note interactively (existing notes only)
++obsidian-cli delete --ls
++
 +# Delete a note in given obsidian vault
 +obsidian-cli delete "{note-path}" --vault "{vault-name}"
 +
@@ -657,24 +954,28 @@ index ef11855..4a91bf8 100644
  ```
  
  <details>
-@@ -449,7 +763,7 @@ If other notes link to the note, you'll be prompted to confirm.
+@@ -473,7 +1019,7 @@ If other notes link to the note, you'll be prompted to confirm.
  Use --force to skip confirmation (recommended for scripts).
  
  Usage:
 -  obsidian-cli delete <note> [flags]
-+  obsidian-cli delete <note-path> [flags]
++  obsidian-cli delete [note-path] [flags]
  
  Aliases:
    delete, del
-@@ -465,6 +779,7 @@ Examples:
+@@ -489,8 +1035,11 @@ Examples:
    obsidian-cli delete "note" --vault "Archive"
  
  Flags:
 +      --dry-run        preview which file would be deleted without deleting it
    -f, --force          skip confirmation if the note has incoming links
    -h, --help           help for delete
++      --ls             select a note interactively
++      --select         select a note interactively
    -v, --vault string   vault name
-@@ -476,6 +791,10 @@ Flags:
+ ```
+ 
+@@ -500,6 +1049,10 @@ Flags:
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
  
@@ -845,18 +1146,70 @@ index cf40752..17b3c03 100644
  	rootCmd.AddCommand(appendCmd)
  }
 diff --git a/cmd/create.go b/cmd/create.go
-index f283518..05bd9e3 100644
+index f283518..8cad0c3 100644
 --- a/cmd/create.go
 +++ b/cmd/create.go
-@@ -12,7 +12,7 @@ var shouldAppend bool
+@@ -1,6 +1,7 @@
+ package cmd
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 
+ 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+@@ -11,8 +12,9 @@ import (
+ var shouldAppend bool
  var shouldOverwrite bool
  var content string
++var createSelect bool
  var createNoteCmd = &cobra.Command{
 -	Use:     "create <note>",
-+	Use:     "create <note-path>",
++	Use:     "create [note-path]",
  	Aliases: []string{"c"},
  	Short:   "Creates note in vault",
  	Long: `Creates a new note in your Obsidian vault.
+@@ -34,11 +36,30 @@ with a numeric suffix. Use --append to add to an existing note, or
+ 
+   # Create and open in $EDITOR
+   obsidian-cli create "Draft" --open --editor`,
+-	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+ 		vault := obsidian.Vault{Name: vaultName}
+ 		uri := obsidian.Uri{}
+-		noteName := args[0]
++		noteName := ""
++		if len(args) > 0 && !createSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickNotePathOrNew(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
+ 		useEditor, err := cmd.Flags().GetBool("editor")
+ 		if err != nil {
+ 			return fmt.Errorf("failed to parse --editor flag: %w", err)
+@@ -57,6 +78,8 @@ with a numeric suffix. Use --append to add to an existing note, or
+ 
+ func init() {
+ 	createNoteCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	createNoteCmd.Flags().BoolVar(&createSelect, "ls", false, "select a note interactively")
++	createNoteCmd.Flags().BoolVar(&createSelect, "select", false, "select a note interactively")
+ 	createNoteCmd.Flags().BoolVarP(&shouldOpen, "open", "", false, "open created note")
+ 	createNoteCmd.Flags().StringVarP(&content, "content", "c", "", "text to add to note")
+ 	createNoteCmd.Flags().BoolVarP(&shouldAppend, "append", "a", false, "append to note")
 diff --git a/cmd/daily.go b/cmd/daily.go
 index 4105495..8dafc58 100644
 --- a/cmd/daily.go
@@ -908,31 +1261,67 @@ index 4105495..8dafc58 100644
  	rootCmd.AddCommand(DailyCmd)
  }
 diff --git a/cmd/delete.go b/cmd/delete.go
-index 6a0b63e..2c9d020 100644
+index 6a0b63e..b486c2f 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
-@@ -1,6 +1,8 @@
+@@ -1,6 +1,9 @@
  package cmd
  
  import (
++	"errors"
 +	"fmt"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
  	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
  
-@@ -8,9 +10,10 @@ import (
+@@ -8,9 +11,11 @@ import (
  )
  
  var deleteForce bool
 +var deleteDryRun bool
++var deleteSelect bool
  
  var deleteCmd = &cobra.Command{
 -	Use:     "delete <note>",
-+	Use:     "delete <note-path>",
++	Use:     "delete [note-path]",
  	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
  	Long: `Delete a note from the vault.
-@@ -34,11 +37,23 @@ Use --force to skip confirmation (recommended for scripts).`,
+@@ -25,21 +30,58 @@ Use --force to skip confirmation (recommended for scripts).`,
+ 
+   # Delete from specific vault
+   obsidian-cli delete "note" --vault "Archive"`,
+-	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+ 		vault := obsidian.Vault{Name: vaultName}
+ 		note := obsidian.Note{}
+-		notePath := args[0]
++		notePath := ""
++
++		if len(args) > 0 && !deleteSelect {
++			notePath = args[0]
++		} else {
++			if !deleteSelect {
++				return errors.New("note path required (or use --ls)")
++			}
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			notePath = selected
++		}
++		if notePath == "" {
++			return errors.New("no note selected")
++		}
+ 		params := actions.DeleteParams{
  			NotePath: notePath,
  			Force:    deleteForce,
  		}
@@ -955,18 +1344,21 @@ index 6a0b63e..2c9d020 100644
 +	deleteCmd.Flags().BoolVar(&deleteDryRun, "dry-run", false, "preview which file would be deleted without deleting it")
  	deleteCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
  	deleteCmd.Flags().BoolVarP(&deleteForce, "force", "f", false, "skip confirmation if the note has incoming links")
++	deleteCmd.Flags().BoolVar(&deleteSelect, "ls", false, "select a note interactively")
++	deleteCmd.Flags().BoolVar(&deleteSelect, "select", false, "select a note interactively")
  	rootCmd.AddCommand(deleteCmd)
+ }
 diff --git a/cmd/frontmatter.go b/cmd/frontmatter.go
 new file mode 100644
-index 0000000..4852f08
+index 0000000..e7a611d
 --- /dev/null
 +++ b/cmd/frontmatter.go
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,92 @@
 +package cmd
 +
 +import (
++	"errors"
 +	"fmt"
-+	"log"
 +
 +	"github.com/Yakitrak/obsidian-cli/pkg/actions"
 +	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
@@ -978,9 +1370,10 @@ index 0000000..4852f08
 +var fmDelete bool
 +var fmKey string
 +var fmValue string
++var fmSelect bool
 +
 +var frontmatterCmd = &cobra.Command{
-+	Use:     "frontmatter <note>",
++	Use:     "frontmatter [note]",
 +	Aliases: []string{"fm"},
 +	Short:   "View or modify note frontmatter",
 +	Long: `View or modify YAML frontmatter in a note.
@@ -992,11 +1385,34 @@ index 0000000..4852f08
 +  obsidian-cli frontmatter "My Note" --print
 +  obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
 +  obsidian-cli frontmatter "My Note" --delete --key "draft"`,
-+	Args: cobra.ExactArgs(1),
-+	Run: func(cmd *cobra.Command, args []string) {
-+		noteName := args[0]
++	Args: cobra.MaximumNArgs(1),
++	RunE: func(cmd *cobra.Command, args []string) error {
 +		vault := obsidian.Vault{Name: vaultName}
 +		note := obsidian.Note{}
++		noteName := ""
++
++		if len(args) > 0 && !fmSelect {
++			noteName = args[0]
++		} else {
++			if !fmSelect {
++				return errors.New("note path required (or use --ls)")
++			}
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
 +
 +		params := actions.FrontmatterParams{
 +			NoteName: noteName,
@@ -1009,17 +1425,20 @@ index 0000000..4852f08
 +
 +		output, err := actions.Frontmatter(&vault, &note, params)
 +		if err != nil {
-+			log.Fatal(err)
++			return err
 +		}
 +
 +		if output != "" {
 +			fmt.Print(output)
 +		}
++		return nil
 +	},
 +}
 +
 +func init() {
 +	frontmatterCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	frontmatterCmd.Flags().BoolVar(&fmSelect, "ls", false, "select a note interactively")
++	frontmatterCmd.Flags().BoolVar(&fmSelect, "select", false, "select a note interactively")
 +	frontmatterCmd.Flags().BoolVarP(&fmPrint, "print", "p", false, "print frontmatter")
 +	frontmatterCmd.Flags().BoolVarP(&fmEdit, "edit", "e", false, "edit a frontmatter key")
 +	frontmatterCmd.Flags().BoolVarP(&fmDelete, "delete", "d", false, "delete a frontmatter key")
@@ -1768,44 +2187,470 @@ index 0000000..f7324fe
 +	fmt.Println("- targets.yaml is stored next to preferences.json.")
 +}
 diff --git a/cmd/move.go b/cmd/move.go
-index 8e23fa5..25402a6 100644
+index 8e23fa5..6a6ffb6 100644
 --- a/cmd/move.go
 +++ b/cmd/move.go
-@@ -11,7 +11,7 @@ import (
+@@ -1,6 +1,7 @@
+ package cmd
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 
+ 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+@@ -10,8 +11,9 @@ import (
+ )
  
  var shouldOpen bool
++var moveSelect bool
  var moveCmd = &cobra.Command{
 -	Use:     "move <source> <destination>",
-+	Use:     "move <from-note-path> <to-note-path>",
++	Use:     "move [from-note-path] [to-note-path]",
  	Aliases: []string{"m"},
  	Short:   "Move or rename note in vault and update corresponding links",
  	Long: `Moves or renames a note and updates all links pointing to it.
+@@ -26,13 +28,68 @@ or [markdown](links) that reference the moved note.`,
+ 
+   # Move and open the result
+   obsidian-cli move "temp" "Archive/temp" --open`,
+-	Args: cobra.ExactArgs(2),
++	Args: cobra.MaximumNArgs(2),
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+-		currentName := args[0]
+-		newName := args[1]
+ 		vault := obsidian.Vault{Name: vaultName}
+ 		note := obsidian.Note{}
+ 		uri := obsidian.Uri{}
++		currentName := ""
++		newName := ""
++
++		var vaultPath string
++		needVaultPath := moveSelect || len(args) < 2
++		if needVaultPath {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			p, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			vaultPath = p
++		}
++
++		switch len(args) {
++		case 2:
++			currentName = args[0]
++			newName = args[1]
++		case 1:
++			if moveSelect {
++				newName = args[0]
++				selected, err := pickExistingNotePath(vaultPath)
++				if err != nil {
++					return err
++				}
++				currentName = selected
++			} else {
++				currentName = args[0]
++				selected, err := promptNewNotePath(vaultPath)
++				if err != nil {
++					return err
++				}
++				newName = selected
++			}
++		case 0:
++			if !moveSelect {
++				return errors.New("from-note-path required (or use --ls)")
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			currentName = selected
++			selected, err = promptNewNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			newName = selected
++		default:
++			return errors.New("expected 0, 1, or 2 arguments")
++		}
++
++		if currentName == "" || newName == "" {
++			return errors.New("both from-note-path and to-note-path are required")
++		}
+ 		useEditor, err := cmd.Flags().GetBool("editor")
+ 		if err != nil {
+ 			return fmt.Errorf("failed to parse --editor flag: %w", err)
+@@ -50,6 +107,8 @@ or [markdown](links) that reference the moved note.`,
+ func init() {
+ 	moveCmd.Flags().BoolVarP(&shouldOpen, "open", "o", false, "open new note")
+ 	moveCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	moveCmd.Flags().BoolVar(&moveSelect, "ls", false, "select the note to move interactively")
++	moveCmd.Flags().BoolVar(&moveSelect, "select", false, "select the note to move interactively")
+ 	moveCmd.Flags().BoolP("editor", "e", false, "open in editor instead of Obsidian (requires --open flag)")
+ 	rootCmd.AddCommand(moveCmd)
+ }
+diff --git a/cmd/note_picker.go b/cmd/note_picker.go
+new file mode 100644
+index 0000000..2613389
+--- /dev/null
++++ b/cmd/note_picker.go
+@@ -0,0 +1,103 @@
++package cmd
++
++import (
++	"bufio"
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"sort"
++	"strings"
++
++	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
++	"github.com/ktr0731/go-fuzzyfinder"
++)
++
++const (
++	notePickerNewNote   = "(Create new note...)"
++	notePickerVaultRoot = "(Vault root)"
++)
++
++func pickExistingNotePath(vaultPath string) (string, error) {
++	notes, err := listVaultNotes(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	if len(notes) == 0 {
++		return "", errors.New("no notes found in vault")
++	}
++	sort.Strings(notes)
++
++	idx, err := fuzzyfinder.Find(notes, func(i int) string { return notes[i] })
++	if err != nil {
++		return "", err
++	}
++	return notes[idx], nil
++}
++
++func pickNotePathOrNew(vaultPath string) (string, error) {
++	notes, err := listVaultNotes(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	notes = append(notes, notePickerNewNote)
++	sort.Strings(notes)
++
++	idx, err := fuzzyfinder.Find(notes, func(i int) string { return notes[i] })
++	if err != nil {
++		return "", err
++	}
++	choice := notes[idx]
++	if choice != notePickerNewNote {
++		return choice, nil
++	}
++	return promptNewNotePath(vaultPath)
++}
++
++func promptNewNotePath(vaultPath string) (string, error) {
++	folders, err := listVaultFolders(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	folders = append(folders, notePickerVaultRoot, "(Create new folder...)")
++	sort.Strings(folders)
++
++	idx, err := fuzzyfinder.Find(folders, func(i int) string { return folders[i] })
++	if err != nil {
++		return "", err
++	}
++	choice := folders[idx]
++	switch choice {
++	case "(Create new folder...)":
++		created, err := promptCreateFolder(vaultPath)
++		if err != nil {
++			return "", err
++		}
++		choice = created
++	case notePickerVaultRoot:
++		choice = ""
++	}
++
++	in := bufio.NewReader(os.Stdin)
++	fmt.Println("Enter new note name (relative to the selected folder; .md optional):")
++	fmt.Print("> ")
++	name, err := in.ReadString('\n')
++	if err != nil {
++		return "", err
++	}
++	name = strings.TrimSpace(name)
++	if name == "" {
++		return "", errors.New("note name is required")
++	}
++	name = strings.TrimSuffix(name, ".md")
++
++	rel := strings.TrimSpace(filepath.ToSlash(filepath.Join(choice, name)))
++	if rel == "" {
++		return "", errors.New("note path is required")
++	}
++	if _, err := obsidian.SafeJoinVaultPath(vaultPath, rel); err != nil {
++		return "", err
++	}
++	return rel, nil
++}
++
 diff --git a/cmd/open.go b/cmd/open.go
-index d4ac325..2520316 100644
+index d4ac325..61bca0f 100644
 --- a/cmd/open.go
 +++ b/cmd/open.go
-@@ -8,7 +8,7 @@ import (
+@@ -1,14 +1,17 @@
+ package cmd
+ 
+ import (
++	"errors"
++
+ 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+ 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+ 	"github.com/spf13/cobra"
+ )
  
  var vaultName string
++var openSelect bool
  var OpenVaultCmd = &cobra.Command{
 -	Use:     "open <note>",
-+	Use:     "open <note-path>",
++	Use:     "open [note-path]",
  	Aliases: []string{"o"},
  	Short:   "Opens note in vault by note name",
  	Long: `Opens a note in Obsidian by name or path.
+@@ -23,11 +26,32 @@ The .md extension is optional.`,
+ 
+   # Open in a specific vault
+   obsidian-cli open "Daily" --vault "Work"`,
+-	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+ 		vault := obsidian.Vault{Name: vaultName}
+ 		uri := obsidian.Uri{}
+-		noteName := args[0]
++		noteName := ""
++
++		if len(args) > 0 && !openSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickNotePathOrNew(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
+ 		params := actions.OpenParams{NoteName: noteName}
+ 		return actions.OpenNote(&vault, &uri, params)
+ 	},
+@@ -35,5 +59,7 @@ The .md extension is optional.`,
+ 
+ func init() {
+ 	OpenVaultCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name (not required if default is set)")
++	OpenVaultCmd.Flags().BoolVar(&openSelect, "ls", false, "select a note interactively")
++	OpenVaultCmd.Flags().BoolVar(&openSelect, "select", false, "select a note interactively")
+ 	rootCmd.AddCommand(OpenVaultCmd)
+ }
 diff --git a/cmd/print.go b/cmd/print.go
-index 652d5e1..a98806e 100644
+index 652d5e1..a638b38 100644
 --- a/cmd/print.go
 +++ b/cmd/print.go
-@@ -11,7 +11,7 @@ import (
+@@ -1,6 +1,7 @@
+ package cmd
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 
+ 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+@@ -10,8 +11,9 @@ import (
+ )
  
  var shouldRenderMarkdown bool
++var printSelect bool
  var printCmd = &cobra.Command{
 -	Use:     "print <note>",
-+	Use:     "print <note-path>",
++	Use:     "print [note-path]",
  	Aliases: []string{"p"},
  	Short:   "Print contents of note",
  	Long: `Prints the contents of a note to stdout.
+@@ -29,10 +31,29 @@ a note without opening Obsidian.`,
+ 
+   # Copy to clipboard (macOS)
+   obsidian-cli print "Template" | pbcopy`,
+-	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+-		noteName := args[0]
+ 		vault := obsidian.Vault{Name: vaultName}
++		noteName := ""
++		if len(args) > 0 && !printSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
+ 		note := obsidian.Note{}
+ 		params := actions.PrintParams{
+ 			NoteName: noteName,
+@@ -48,5 +69,7 @@ a note without opening Obsidian.`,
+ 
+ func init() {
+ 	printCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	printCmd.Flags().BoolVar(&printSelect, "ls", false, "select a note interactively")
++	printCmd.Flags().BoolVar(&printSelect, "select", false, "select a note interactively")
+ 	rootCmd.AddCommand(printCmd)
+ }
+diff --git a/cmd/root.go b/cmd/root.go
+index 3aed97e..20fd5ee 100644
+--- a/cmd/root.go
++++ b/cmd/root.go
+@@ -3,7 +3,9 @@ package cmd
+ import (
+ 	"fmt"
+ 	"os"
++	"strings"
+ 
++	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+ 	"github.com/spf13/cobra"
+ )
+ 
+@@ -15,8 +17,48 @@ var rootCmd = &cobra.Command{
+ }
+ 
+ func Execute() {
++	maybeRewriteArgsForTargetNames()
+ 	if err := rootCmd.Execute(); err != nil {
+ 		fmt.Fprintf(os.Stderr, "Whoops. There was an error while executing your CLI '%s'", err)
+ 		os.Exit(1)
+ 	}
+ }
++
++func maybeRewriteArgsForTargetNames() {
++	args := os.Args[1:]
++	if len(args) == 0 {
++		return
++	}
++	first := strings.TrimSpace(args[0])
++	if first == "" || strings.HasPrefix(first, "-") {
++		return
++	}
++	if isKnownRootCommand(first) {
++		return
++	}
++
++	cfg, err := obsidian.LoadTargets()
++	if err != nil {
++		return
++	}
++	if _, ok := cfg[first]; !ok {
++		return
++	}
++
++	// Treat: obsidian-cli <targetName> ... as: obsidian-cli target <targetName> ...
++	rootCmd.SetArgs(append([]string{"target"}, args...))
++}
++
++func isKnownRootCommand(name string) bool {
++	for _, c := range rootCmd.Commands() {
++		if c.Name() == name {
++			return true
++		}
++		for _, a := range c.Aliases {
++			if a == name {
++				return true
++			}
++		}
++	}
++	return false
++}
+diff --git a/cmd/search.go b/cmd/search.go
+index 571b243..c6c4836 100644
+--- a/cmd/search.go
++++ b/cmd/search.go
+@@ -2,6 +2,7 @@ package cmd
+ 
+ import (
+ 	"fmt"
++	"strings"
+ 
+ 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+ 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+@@ -28,14 +29,43 @@ note in Obsidian, or use --editor to open in your $EDITOR.`,
+ 	Args: cobra.NoArgs,
+ 	RunE: func(cmd *cobra.Command, args []string) error {
+ 		vault := obsidian.Vault{Name: vaultName}
+-		note := obsidian.Note{}
+-		uri := obsidian.Uri{}
+-		fuzzyFinder := obsidian.FuzzyFinder{}
+ 		useEditor, err := cmd.Flags().GetBool("editor")
+ 		if err != nil {
+ 			return fmt.Errorf("failed to retrieve 'editor' flag: %w", err)
+ 		}
+-		return actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor)
++
++		if _, err := vault.DefaultName(); err != nil {
++			return err
++		}
++		vaultPath, err := vault.Path()
++		if err != nil {
++			return err
++		}
++
++		notePath, err := pickNotePathOrNew(vaultPath)
++		if err != nil {
++			return err
++		}
++		if strings.TrimSpace(notePath) == "" {
++			return fmt.Errorf("no note selected")
++		}
++
++		if useEditor {
++			fmt.Printf("Opening note: %s\n", notePath)
++			rel := notePath
++			if !strings.HasSuffix(strings.ToLower(rel), ".md") {
++				rel += ".md"
++			}
++			abs, err := obsidian.SafeJoinVaultPath(vaultPath, rel)
++			if err != nil {
++				return err
++			}
++			return obsidian.OpenInEditor(abs)
++		}
++
++		uri := obsidian.Uri{}
++		params := actions.OpenParams{NoteName: notePath}
++		return actions.OpenNote(&vault, &uri, params)
+ 	},
+ }
+ 
 diff --git a/cmd/search_content.go b/cmd/search_content.go
 index 6cfd2d1..fe6340d 100644
 --- a/cmd/search_content.go
@@ -1834,10 +2679,10 @@ index 0c855f6..75a7c85 100644
  	Long: `Sets the default vault for all commands.
 diff --git a/cmd/target.go b/cmd/target.go
 new file mode 100644
-index 0000000..c604555
+index 0000000..720e19e
 --- /dev/null
 +++ b/cmd/target.go
-@@ -0,0 +1,1325 @@
+@@ -0,0 +1,1326 @@
 +package cmd
 +
 +import (
@@ -1862,7 +2707,8 @@ index 0000000..c604555
 +)
 +
 +var targetCmd = &cobra.Command{
-+	Use:   "target [id] [text]",
++	Use:     "target [id] [text]",
++	Aliases: []string{"t"},
 +	Short: "Append text to a configured target note",
 +	Long: `Appends text to a note configured in targets.yaml.
 +
@@ -5497,58 +6343,89 @@ Compare: origin/main..pr-04d-init
 
 ### Commits
 ```
-368d30e feat(append): select target via --select/--ls
-f1ace11 docs: add versioning note (pr-04d-init)
-ff8b673 docs: refresh README (pr-04d-init)
-6dd855a docs: note PR #59 compatibility
-3e18c90 docs: README document frontmatter command
-8328d62 feat: add frontmatter command for viewing and editing note metadata
-abe0d27 docs: dedupe append section in README
-e62b1ce docs: add acknowledgements for link-update work
-5944219 docs: add target/remove/test and append time-format examples
-3a7c61d docs: update README for init/append/targets and dry-run
-a3c3925 chore(cli): improve usage/help text
-d620abc feat(cli): add dry-run to append/daily/delete
-e3b0c36 feat(target): improve edit prompt
-3dd21b8 feat(wizard): add back/skip/help prompts
-9a1978f fix(init): add wizard UI helpers
-42593c8 feat(append): apply daily note template on create
-c057fd0 chore(target): preserve targets.yaml header on save
-19a9236 feat(cli): add interactive target editor
-db563c8 feat(cli): add target command
-3b02b16 feat(target): add targets config and execution
-0c25360 feat(obsidian): support obsidian-style date patterns
-ffbec38 docs: README document append command
-bb67cc9 feat(append): add daily note append command
-424ac98 fix(config): enforce secure perms on preferences
-f7cb7ea docs: README mention preferences.json and per-vault settings
-4f2a0a8 feat(config): add per-vault settings to preferences.json
-e4d1520 docs: README document delete confirmation and --force
-d3a471d feat(delete): warn when note has incoming links
-efb95c4 docs: acknowledge upstream PR #58 for link updates
-d06731f docs: README clarify move link updates
-6233ae2 fix: update path-based wikilinks and markdown links when moving notes
+226e6c8 docs: update README for note picker and targets
+39a9c56 feat(target): allow invoking targets by name
+f083982 feat: add --ls/--select note picker
+a251ea4 feat(append): select target via --select/--ls
+b177d5d docs: add versioning note (pr-04d-init)
+1f4a6eb docs: refresh README (pr-04d-init)
+a6934da docs: note PR #59 compatibility
+52f8fdb docs: README document frontmatter command
+9eb89f6 feat: add frontmatter command for viewing and editing note metadata
+6b4e28b docs: dedupe append section in README
+1263511 docs: add acknowledgements for link-update work
+783807c docs: add target/remove/test and append time-format examples
+dbadbf1 docs: update README for init/append/targets and dry-run
+7625bce chore(cli): improve usage/help text
+4eb45d1 feat(cli): add dry-run to append/daily/delete
+5be92e6 feat(target): improve edit prompt
+b41c946 feat(wizard): add back/skip/help prompts
+469f685 fix(init): add wizard UI helpers
+4787252 feat(append): apply daily note template on create
+0bf2948 chore(target): preserve targets.yaml header on save
+2aaafd0 feat(cli): add interactive target editor
+b5740c7 feat(cli): add target command
+aff3c5b feat(target): add targets config and execution
+368ef12 feat(obsidian): support obsidian-style date patterns
+50c1a11 docs: README document delete confirmation and --force
+abe6eb2 docs: acknowledge upstream PR #58 for link updates
+382b61c docs: README clarify move link updates
+900d9ba fix(delete): use 'del' alias
+7bcfa66 docs: refresh README (pr-04b-append)
+32b835f docs: README document append command
+fea6040 feat(append): add daily note append command
+2b849c1 docs: README mention preferences.json and per-vault settings
+9071de0 docs: README document delete confirmation and --force
+533ca73 feat(delete): warn when note has incoming links
+dd03cfb docs: acknowledge upstream PR #58 for link updates
+6b619bc docs: README clarify move link updates
+21aaedd fix(delete): use 'del' alias
+022b22d docs: refresh README (pr-04a-settings)
+1f72c77 fix(config): enforce secure perms on preferences
+38d6fdc docs: README mention preferences.json and per-vault settings
+9a9556a feat(config): add per-vault settings to preferences.json
+ceec85e docs: README document delete confirmation and --force
+dedd70a feat(delete): warn when note has incoming links
+508047d docs: acknowledge upstream PR #58 for link updates
+a6b408a docs: README clarify move link updates
+bb3ac19 fix(delete): use 'del' alias
+eaa2818 docs: refresh README (pr-03-delete)
+6a92bec docs: README document delete confirmation and --force
+9603bb0 feat(delete): warn when note has incoming links
+1335bcd docs: acknowledge upstream PR #58 for link updates
+c0e5926 docs: README clarify move link updates
+9bbb6fa docs: refresh README (pr-02-links)
+3f5cc8a docs: acknowledge upstream PR #58 for link updates
+6749716 docs: README clarify move link updates
+3545693 fix: update path-based wikilinks and markdown links when moving notes
+5e56d0f docs: README mention command-specific help
+8bb520e docs: update generated help (pr-01-ux)
+63ea5e1 feat(cli): add alias helper command
+ee4eee9 docs: refresh README (pr-01-ux)
 06d79e8 docs: README mention command-specific help
 d9d3fa9 feat(cli): improve help and error handling
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                                          |  573 ++++-
+ README.md                                          |  841 +++++-
+ cmd/alias.go                                       |  191 ++
  cmd/append.go                                      |  159 ++
- cmd/create.go                                      |   35 +-
+ cmd/create.go                                      |   60 +-
  cmd/daily.go                                       |   21 +-
- cmd/delete.go                                      |   48 +-
- cmd/frontmatter.go                                 |   65 +
+ cmd/delete.go                                      |   77 +-
+ cmd/frontmatter.go                                 |   92 +
  cmd/init.go                                        |  734 ++++++
- cmd/move.go                                        |   31 +-
- cmd/open.go                                        |   25 +-
- cmd/print.go                                       |   26 +-
+ cmd/move.go                                        |   94 +-
+ cmd/note_picker.go                                 |  103 +
+ cmd/open.go                                        |   51 +-
+ cmd/print.go                                       |   51 +-
  cmd/print_default.go                               |   22 +-
- cmd/search.go                                      |   26 +-
+ cmd/root.go                                        |   42 +
+ cmd/search.go                                      |   58 +-
  cmd/search_content.go                              |   27 +-
  cmd/set_default.go                                 |   26 +-
- cmd/target.go                                      | 1325 ++++++++++
+ cmd/target.go                                      | 1326 ++++++++++
  cmd/wizard_prompt.go                               |   44 +
  cmd/wizard_ui.go                                   |   28 +
  go.mod                                             |    3 +
@@ -5627,7 +6504,7 @@ d9d3fa9 feat(cli): improve help and error handling
  vendor/gopkg.in/yaml.v2/yamlh.go                   |  739 ++++++
  vendor/gopkg.in/yaml.v2/yamlprivateh.go            |  173 ++
  vendor/modules.txt                                 |    9 +
- 93 files changed, 19869 insertions(+), 122 deletions(-)
+ 96 files changed, 20690 insertions(+), 133 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -5681,10 +6558,10 @@ d9d3fa9 feat(cli): improve help and error handling
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..4a91bf8 100644
+index 591f921..6b0d9f2 100644
 --- a/README.md
 +++ b/README.md
-@@ -2,12 +2,53 @@
+@@ -2,12 +2,54 @@
  
  ---
  
@@ -5699,6 +6576,7 @@ index 591f921..4a91bf8 100644
 +  obsidian-cli [command]
 +
 +Available Commands:
++  alias          Generate a shell alias snippet or install a symlink shortcut
 +  append         Append text to today's daily note
 +  completion     Generate the autocompletion script for the specified shell
 +  create         Creates note in vault
@@ -5741,7 +6619,7 @@ index 591f921..4a91bf8 100644
  
  ---
  
-@@ -48,6 +89,56 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
+@@ -48,6 +90,77 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
  obsidian-cli --help
  ```
  
@@ -5792,13 +6670,34 @@ index 591f921..4a91bf8 100644
 +- `append` and `target` read content from stdin (piped), or prompt for multi-line input until EOF (Ctrl-D to save, Ctrl-C to cancel).
 +- `target add` runs a guided workflow when you omit the `[name]`.
 +- `delete` prompts for confirmation if the note has incoming links (use `--force` to skip).
++- `open`, `create`, and `print` can prompt you to pick a note (or type a new one) when you omit the note path.
++- `delete`, `frontmatter`, and `move` support `--ls` / `--select` to pick an existing note interactively.
 +
-+The fuzzy finder (used by `search`, `search-content`, `init`, and `target --select`) lets you type to filter, then press Enter to choose a result. Press Esc, Ctrl-C, or Ctrl-D to abort the selection.
++The fuzzy finder (used by `search`, `search-content`, `open`, `create`, `print`, `frontmatter --ls`, `delete --ls`, `move --ls`, and `target --select`) lets you type to filter, then press Enter to choose a result. Press Esc, Ctrl-C, or Ctrl-D to abort the selection.
++
++In the note picker used by `search`, `open`, and `create`, there’s a “Create new note…” option which lets you choose an existing folder (or create a new folder), then type the note name.
++
++### Command Shortcut (Alias)
++
++If you want a shorter command name (for example `obsi`), you can either:
++
++- Create a shell alias (session-scoped unless you add it to your shell profile):
++
++  ```bash
++  # zsh/bash
++  eval "$(obsidian-cli alias obsi --shell zsh)"
++  ```
++
++- Or install a persistent symlink shortcut (recommended):
++
++  ```bash
++  obsidian-cli alias obsi --symlink --dir "$HOME/.local/bin"
++  ```
 +
  ### Editor Flag
  
  The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
-@@ -83,6 +174,57 @@ obsidian-cli set-default "{vault-name}"
+@@ -83,6 +196,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
@@ -5806,7 +6705,7 @@ index 591f921..4a91bf8 100644
 +
 +- `obsidian-cli/preferences.json`
 +
-+PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
++This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration). For example:
 +
 +```json
 +{
@@ -5856,7 +6755,7 @@ index 591f921..4a91bf8 100644
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
-@@ -95,6 +237,35 @@ obsidian-cli print-default
+@@ -95,6 +259,35 @@ obsidian-cli print-default
  obsidian-cli print-default --path-only
  ```
  
@@ -5892,7 +6791,7 @@ index 591f921..4a91bf8 100644
  You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
  
  ```bash
-@@ -106,9 +277,22 @@ obs_cd() {
+@@ -106,22 +299,75 @@ obs_cd() {
  
  Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
  
@@ -5912,12 +6811,55 @@ index 591f921..4a91bf8 100644
  ### Open Note
  
 -Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
-+Open a note in Obsidian by vault-relative note path.
++Open a note in Obsidian by vault-relative note path (or pick one interactively with `--ls` / `--select`).
  
  ```bash
  # Opens note in obsidian vault
-@@ -121,7 +305,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ obsidian-cli open "{note-name}"
  
++# Pick (or create) a note path interactively
++obsidian-cli open --ls
++
+ # Opens note in specified obsidian vault
+ obsidian-cli open "{note-name}" --vault "{vault-name}"
+ 
+ ```
+ 
++<details>
++<summary><code>open</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli open --help
++Opens a note in Obsidian by name or path.
++
++The note name can be just the filename or a path relative to the vault root.
++The .md extension is optional.
++
++Usage:
++  obsidian-cli open [note-path] [flags]
++
++Aliases:
++  open, o
++
++Examples:
++  # Open a note by name
++  obsidian-cli open "Meeting Notes"
++
++  # Open a note in a subfolder
++  obsidian-cli open "Projects/my-project"
++
++  # Open in a specific vault
++  obsidian-cli open "Daily" --vault "Work"
++
++Flags:
++  -h, --help           help for open
++      --ls             select a note interactively
++      --select         select a note interactively
++  -v, --vault string   vault name (not required if default is set)
++```
++
++</details>
++
  ### Daily Note
  
 -Open daily note in Obsidian. It will create one (using template) if one does not exist.
@@ -5927,7 +6869,7 @@ index 591f921..4a91bf8 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -130,6 +316,320 @@ obsidian-cli daily
+@@ -130,11 +376,334 @@ obsidian-cli daily
  # Creates / opens daily note in specified obsidian vault
  obsidian-cli daily --vault "{vault-name}"
  
@@ -6035,6 +6977,12 @@ index 591f921..4a91bf8 100644
 +# Guided target creation workflow
 +obsidian-cli target add
 +
++# Short alias for `target`
++obsidian-cli t inbox "Buy milk"
++
++# You can also invoke a target name directly (the CLI routes it to `target <name> ...`)
++obsidian-cli inbox "Buy milk"
++
 +# Capture a one-liner to a target
 +obsidian-cli target inbox "Buy milk"
 +
@@ -6115,6 +7063,9 @@ index 591f921..4a91bf8 100644
 +Usage:
 +  obsidian-cli target [id] [text] [flags]
 +  obsidian-cli target [command]
++
++Aliases:
++  target, t
 +
 +Examples:
 +  # Append a one-liner to a target
@@ -6248,8 +7199,71 @@ index 591f921..4a91bf8 100644
  ```
  
  ### Search Note
-@@ -182,13 +682,15 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
  
+-Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
++Starts a fuzzy search displaying notes in the terminal from the vault. Press Enter on a note to open it in Obsidian (or choose “Create new note…” to pick/create a folder and type a new note name).
+ 
+ ```bash
+ # Searches in default obsidian vault
+@@ -166,12 +735,15 @@ obsidian-cli search-content "search term" --editor
+ 
+ ### Print Note
+ 
+-Prints the contents of given note name or path in Obsidian.
++Prints the contents of a note to stdout (useful for piping to other commands).
+ 
+ ```bash
+ # Prints note in default vault
+ obsidian-cli print "{note-name}"
+ 
++# Pick a note interactively
++obsidian-cli print --ls
++
+ # Prints note by path in default vault
+ obsidian-cli print "{note-path}"
+ 
+@@ -180,15 +752,58 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
+ 
+ ```
+ 
++<details>
++<summary><code>print</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli print --help
++Prints the contents of a note to stdout.
++
++Useful for piping note contents to other commands, or quickly viewing
++a note without opening Obsidian.
++
++Usage:
++  obsidian-cli print [note-path] [flags]
++
++Aliases:
++  print, p
++
++Examples:
++  # Print a note
++  obsidian-cli print "Meeting Notes"
++
++  # Print note in subfolder
++  obsidian-cli print "Projects/readme"
++
++  # Pipe to grep
++  obsidian-cli print "Todo" | grep "TODO"
++
++  # Copy to clipboard (macOS)
++  obsidian-cli print "Template" | pbcopy
++
++Flags:
++  -h, --help           help for print
++      --ls             select a note interactively
++      --select         select a note interactively
++  -v, --vault string   vault name
++```
++
++</details>
++
  ### Create / Update Note
  
 -Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note.
@@ -6263,20 +7277,181 @@ index 591f921..4a91bf8 100644
  obsidian-cli create "{note-name}"
  
 -# Creates empty note in given obsidian and opens it
++# Pick (or create) a note path interactively
++obsidian-cli create --ls
++
 +# Creates empty note in given obsidian
  obsidian-cli create "{note-name}"  --vault "{vault-name}"
  
  # Creates note in default obsidian with content
-@@ -212,6 +714,8 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
+@@ -208,40 +823,236 @@ obsidian-cli create "{note-name}" --content "abcde" --open --editor
  
- Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
+ ```
  
-+Note: `--editor` only applies when `--open` is also provided.
++<details>
++<summary><code>create</code> command reference (help, flags, aliases)</summary>
 +
++```text
++$ obsidian-cli create --help
++Creates a new note in your Obsidian vault.
++
++By default, if the note already exists, Obsidian will create a new note
++with a numeric suffix. Use --append to add to an existing note, or
++--overwrite to replace its contents.
++
++Usage:
++  obsidian-cli create [note-path] [flags]
++
++Aliases:
++  create, c
++
++Examples:
++  # Create an empty note
++  obsidian-cli create "New Note"
++
++  # Create with content
++  obsidian-cli create "Ideas" --content "My brilliant idea"
++
++  # Append to existing note
++  obsidian-cli create "Log" --content "Entry" --append
++
++  # Create and open in Obsidian
++  obsidian-cli create "Draft" --open
++
++  # Create and open in $EDITOR
++  obsidian-cli create "Draft" --open --editor
++
++Flags:
++  -a, --append           append to note
++  -c, --content string   text to add to note
++  -e, --editor           open in editor instead of Obsidian (requires --open flag)
++  -h, --help             help for create
++      --ls               select a note interactively
++      --open             open created note
++  -o, --overwrite        overwrite note
++      --select           select a note interactively
++  -v, --vault string     vault name
++```
++
++</details>
++
+ ### Move / Rename Note
+ 
+-Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
++Moves a note to a new path (or renames it) and updates links inside the vault to match.
++
++Note: `--editor` only applies when `--open` is also provided.
+ 
  ```bash
  # Renames a note in default obsidian
  obsidian-cli move "{current-note-path}" "{new-note-path}"
-@@ -230,18 +734,67 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+ 
++# Pick the note to move interactively
++obsidian-cli move --ls "{new-note-path}"
++
+ # Renames a note and given obsidian
+ obsidian-cli move "{current-note-path}" "{new-note-path}" --vault "{vault-name}"
+ 
+ # Renames a note in default obsidian and opens it
+ obsidian-cli move "{current-note-path}" "{new-note-path}" --open
+ 
+-# Renames a note and opens it in your default editor
+-obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
++	# Renames a note and opens it in your default editor
++	obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
++```
++
++<details>
++<summary><code>move</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli move --help
++Moves or renames a note and updates all links pointing to it.
++
++This command safely renames notes by also updating any [[wikilinks]]
++or [markdown](links) that reference the moved note.
++
++Usage:
++  obsidian-cli move [from-note-path] [to-note-path] [flags]
++
++Aliases:
++  move, m
++
++Examples:
++  # Rename a note
++  obsidian-cli move "Old Name" "New Name"
++
++  # Move to a different folder
++  obsidian-cli move "Inbox/note" "Projects/note"
++
++  # Move and open the result
++  obsidian-cli move "temp" "Archive/temp" --open
++
++Flags:
++  -e, --editor         open in editor instead of Obsidian (requires --open flag)
++  -h, --help           help for move
++      --ls             select the note to move interactively
++  -o, --open           open new note
++      --select         select the note to move interactively
++  -v, --vault string   vault name
+ ```
+ 
++</details>
++
++### Frontmatter
++
++View or edit a note’s YAML frontmatter.
++
++```bash
++# Print frontmatter
++obsidian-cli frontmatter "My Note" --print
++
++# Edit a key
++obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
++
++# Delete a key
++obsidian-cli frontmatter "My Note" --delete --key "draft"
++
++# Pick a note interactively
++obsidian-cli frontmatter --ls
++```
++
++<details>
++<summary><code>frontmatter</code> command reference (help, flags, aliases)</summary>
++
++```text
++$ obsidian-cli frontmatter --help
++View or modify YAML frontmatter in a note.
++
++Use --print to display frontmatter, --edit to modify a key,
++or --delete to remove a key.
++
++Examples:
++  obsidian-cli frontmatter "My Note" --print
++  obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
++  obsidian-cli frontmatter "My Note" --delete --key "draft"
++
++Usage:
++  obsidian-cli frontmatter [note] [flags]
++
++Aliases:
++  frontmatter, fm
++
++Flags:
++  -d, --delete         delete a frontmatter key
++  -e, --edit           edit a frontmatter key
++  -h, --help           help for frontmatter
++  -k, --key string     key to edit or delete
++      --ls             select a note interactively
++  -p, --print          print frontmatter
++      --select         select a note interactively
++      --value string   value to set (required for --edit)
++  -v, --vault string   vault name
++```
++
++</details>
++
+ ### Delete Note
  
  Deletes a given note (path from top level of vault).
  
@@ -6290,6 +7465,9 @@ index 591f921..4a91bf8 100644
  obsidian-cli delete "{note-path}"
  
 -# Renames a note in given obsidian
++# Pick a note interactively (existing notes only)
++obsidian-cli delete --ls
++
 +# Delete a note in given obsidian vault
  obsidian-cli delete "{note-path}" --vault "{vault-name}"
 +
@@ -6298,8 +7476,8 @@ index 591f921..4a91bf8 100644
 +
 +# Preview which file would be deleted (does not delete)
 +obsidian-cli delete --dry-run "{note-path}"
-+```
-+
+ ```
+ 
 +<details>
 +<summary><code>delete</code> command reference (help, flags, aliases)</summary>
 +
@@ -6311,7 +7489,7 @@ index 591f921..4a91bf8 100644
 +Use --force to skip confirmation (recommended for scripts).
 +
 +Usage:
-+  obsidian-cli delete <note-path> [flags]
++  obsidian-cli delete [note-path] [flags]
 +
 +Aliases:
 +  delete, del
@@ -6330,9 +7508,11 @@ index 591f921..4a91bf8 100644
 +      --dry-run        preview which file would be deleted without deleting it
 +  -f, --force          skip confirmation if the note has incoming links
 +  -h, --help           help for delete
++      --ls             select a note interactively
++      --select         select a note interactively
 +  -v, --vault string   vault name
- ```
- 
++```
++
 +</details>
 +
  ## Contribution
@@ -6346,6 +7526,203 @@ index 591f921..4a91bf8 100644
  ## License
  
  Available under [MIT License](./LICENSE)
+diff --git a/cmd/alias.go b/cmd/alias.go
+new file mode 100644
+index 0000000..5b26cd9
+--- /dev/null
++++ b/cmd/alias.go
+@@ -0,0 +1,191 @@
++package cmd
++
++import (
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"runtime"
++	"strings"
++
++	"github.com/spf13/cobra"
++)
++
++type aliasShell string
++
++const (
++	aliasShellBash       aliasShell = "bash"
++	aliasShellZsh        aliasShell = "zsh"
++	aliasShellFish       aliasShell = "fish"
++	aliasShellPowerShell aliasShell = "powershell"
++	aliasShellCmd        aliasShell = "cmd"
++)
++
++var aliasCmdName string
++var aliasCmdShell string
++var aliasCmdPrint bool
++var aliasCmdSymlink bool
++var aliasCmdSymlinkDir string
++var aliasCmdForce bool
++var aliasCmdDryRun bool
++
++var aliasCmd = &cobra.Command{
++	Use:   "alias [name]",
++	Short: "Generate a shell alias snippet or install a symlink shortcut",
++	Long: `Aliases are typically a shell feature. This command helps by generating an alias snippet you can add to your shell profile,
++or by creating a symlink (e.g. ~/.local/bin/obsi -> obsidian-cli) so you can run the CLI with a shorter name.`,
++	Args: cobra.MaximumNArgs(1),
++	Example: `  # Print an alias snippet (paste into your shell profile, or eval it)
++  obsidian-cli alias obsi --shell zsh
++  eval "$(obsidian-cli alias obsi --shell zsh)"
++
++  # Install a symlink shortcut (recommended for a persistent shortcut)
++  obsidian-cli alias obsi --symlink --dir "$HOME/.local/bin"`,
++	RunE: func(cmd *cobra.Command, args []string) error {
++		if len(args) == 1 && aliasCmdName == "" {
++			aliasCmdName = args[0]
++		}
++		if aliasCmdName == "" {
++			return errors.New("alias name is required (provide [name] or --name)")
++		}
++
++		if !isValidAliasName(aliasCmdName) {
++			return fmt.Errorf("invalid alias name %q (use letters/numbers/underscore/dash; must start with a letter)", aliasCmdName)
++		}
++
++		shell := normalizeShell(aliasCmdShell, os.Getenv("SHELL"))
++
++		if aliasCmdSymlink {
++			if aliasCmdSymlinkDir == "" {
++				return errors.New("--dir is required when using --symlink")
++			}
++			if err := installSymlinkAlias(aliasCmdName, aliasCmdSymlinkDir, aliasCmdForce, aliasCmdDryRun); err != nil {
++				return err
++			}
++			if !aliasCmdPrint {
++				return nil
++			}
++		}
++
++		if aliasCmdPrint {
++			fmt.Print(renderAliasSnippet(aliasCmdName, shell))
++		}
++		return nil
++	},
++}
++
++func init() {
++	aliasCmd.Flags().StringVar(&aliasCmdName, "name", "", "alias name (e.g. obsi)")
++	aliasCmd.Flags().StringVar(&aliasCmdShell, "shell", "", "shell for snippet output: bash, zsh, fish, powershell, cmd (default: detect from $SHELL)")
++	aliasCmd.Flags().BoolVar(&aliasCmdPrint, "print", true, "print the alias snippet to stdout")
++
++	aliasCmd.Flags().BoolVar(&aliasCmdSymlink, "symlink", false, "install a symlink shortcut in --dir pointing to this executable")
++	aliasCmd.Flags().StringVar(&aliasCmdSymlinkDir, "dir", filepath.Join(os.Getenv("HOME"), ".local", "bin"), "directory to place the symlink (used with --symlink)")
++	aliasCmd.Flags().BoolVar(&aliasCmdForce, "force", false, "overwrite an existing file at the symlink path")
++	aliasCmd.Flags().BoolVar(&aliasCmdDryRun, "dry-run", false, "show what would be done without writing anything")
++
++	rootCmd.AddCommand(aliasCmd)
++}
++
++func isValidAliasName(name string) bool {
++	if name == "" {
++		return false
++	}
++	first := name[0]
++	if !((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')) {
++		return false
++	}
++	for i := 0; i < len(name); i++ {
++		c := name[i]
++		isLetter := (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
++		isDigit := c >= '0' && c <= '9'
++		isOK := isLetter || isDigit || c == '_' || c == '-'
++		if !isOK {
++			return false
++		}
++	}
++	return true
++}
++
++func normalizeShell(flag string, envShell string) aliasShell {
++	if flag != "" {
++		return aliasShell(strings.ToLower(strings.TrimSpace(flag)))
++	}
++	base := strings.ToLower(filepath.Base(envShell))
++	switch base {
++	case "bash":
++		return aliasShellBash
++	case "zsh":
++		return aliasShellZsh
++	case "fish":
++		return aliasShellFish
++	case "pwsh", "powershell":
++		return aliasShellPowerShell
++	case "cmd", "cmd.exe":
++		return aliasShellCmd
++	default:
++		return aliasShellZsh
++	}
++}
++
++func renderAliasSnippet(name string, shell aliasShell) string {
++	switch shell {
++	case aliasShellFish:
++		return fmt.Sprintf("alias %s 'obsidian-cli'\n", name)
++	case aliasShellPowerShell:
++		return fmt.Sprintf("Set-Alias -Name %s -Value obsidian-cli\n", name)
++	case aliasShellCmd:
++		return fmt.Sprintf("doskey %s=obsidian-cli $*\n", name)
++	case aliasShellBash, aliasShellZsh:
++		fallthrough
++	default:
++		return fmt.Sprintf("alias %s=\"obsidian-cli\"\n", name)
++	}
++}
++
++func installSymlinkAlias(name string, dir string, force bool, dryRun bool) error {
++	exe, err := os.Executable()
++	if err != nil {
++		return err
++	}
++	exe, err = filepath.EvalSymlinks(exe)
++	if err != nil {
++		return err
++	}
++
++	if err := os.MkdirAll(dir, 0o755); err != nil {
++		return err
++	}
++
++	linkName := name
++	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(linkName), ".exe") {
++		linkName += ".exe"
++	}
++	dst := filepath.Join(dir, linkName)
++
++	if _, err := os.Lstat(dst); err == nil {
++		if !force {
++			return fmt.Errorf("refusing to overwrite existing path: %s (use --force)", dst)
++		}
++		if dryRun {
++			fmt.Printf("Would remove existing path: %s\n", dst)
++		} else if err := os.Remove(dst); err != nil {
++			return err
++		}
++	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
++		return err
++	}
++
++	if dryRun {
++		fmt.Printf("Would create symlink: %s -> %s\n", dst, exe)
++		return nil
++	}
++	if err := os.Symlink(exe, dst); err != nil {
++		if runtime.GOOS == "windows" {
++			return fmt.Errorf("failed to create symlink %s -> %s: %w (Windows may require admin/developer mode)", dst, exe, err)
++		}
++		return err
++	}
++	return nil
++}
++
 diff --git a/cmd/append.go b/cmd/append.go
 new file mode 100644
 index 0000000..17b3c03
@@ -6512,13 +7889,14 @@ index 0000000..17b3c03
 +	rootCmd.AddCommand(appendCmd)
 +}
 diff --git a/cmd/create.go b/cmd/create.go
-index 338dcc9..05bd9e3 100644
+index 338dcc9..8cad0c3 100644
 --- a/cmd/create.go
 +++ b/cmd/create.go
-@@ -1,27 +1,47 @@
+@@ -1,27 +1,68 @@
  package cmd
  
  import (
++	"errors"
 +	"fmt"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
@@ -6530,9 +7908,10 @@ index 338dcc9..05bd9e3 100644
  var shouldAppend bool
  var shouldOverwrite bool
  var content string
++var createSelect bool
  var createNoteCmd = &cobra.Command{
 -	Use:     "create",
-+	Use:     "create <note-path>",
++	Use:     "create [note-path]",
  	Aliases: []string{"c"},
  	Short:   "Creates note in vault",
 -	Args:    cobra.ExactArgs(1),
@@ -6556,11 +7935,31 @@ index 338dcc9..05bd9e3 100644
 +
 +  # Create and open in $EDITOR
 +  obsidian-cli create "Draft" --open --editor`,
-+	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
 +	RunE: func(cmd *cobra.Command, args []string) error {
  		vault := obsidian.Vault{Name: vaultName}
  		uri := obsidian.Uri{}
- 		noteName := args[0]
+-		noteName := args[0]
++		noteName := ""
++		if len(args) > 0 && !createSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickNotePathOrNew(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
  		useEditor, err := cmd.Flags().GetBool("editor")
  		if err != nil {
 -			log.Fatalf("Failed to parse --editor flag: %v", err)
@@ -6568,7 +7967,7 @@ index 338dcc9..05bd9e3 100644
  		}
  		params := actions.CreateParams{
  			NoteName:        noteName,
-@@ -31,10 +51,7 @@ var createNoteCmd = &cobra.Command{
+@@ -31,15 +72,14 @@ var createNoteCmd = &cobra.Command{
  			ShouldOpen:      shouldOpen,
  			UseEditor:       useEditor,
  		}
@@ -6580,6 +7979,13 @@ index 338dcc9..05bd9e3 100644
  	},
  }
  
+ func init() {
+ 	createNoteCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	createNoteCmd.Flags().BoolVar(&createSelect, "ls", false, "select a note interactively")
++	createNoteCmd.Flags().BoolVar(&createSelect, "select", false, "select a note interactively")
+ 	createNoteCmd.Flags().BoolVarP(&shouldOpen, "open", "", false, "open created note")
+ 	createNoteCmd.Flags().StringVarP(&content, "content", "c", "", "text to add to note")
+ 	createNoteCmd.Flags().BoolVarP(&shouldAppend, "append", "a", false, "append to note")
 diff --git a/cmd/daily.go b/cmd/daily.go
 index 4105495..8dafc58 100644
 --- a/cmd/daily.go
@@ -6631,13 +8037,14 @@ index 4105495..8dafc58 100644
  	rootCmd.AddCommand(DailyCmd)
  }
 diff --git a/cmd/delete.go b/cmd/delete.go
-index f29f691..2c9d020 100644
+index f29f691..b486c2f 100644
 --- a/cmd/delete.go
 +++ b/cmd/delete.go
-@@ -1,32 +1,60 @@
+@@ -1,32 +1,87 @@
  package cmd
  
  import (
++	"errors"
 +	"fmt"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
@@ -6649,11 +8056,12 @@ index f29f691..2c9d020 100644
  
 +var deleteForce bool
 +var deleteDryRun bool
++var deleteSelect bool
 +
  var deleteCmd = &cobra.Command{
 -	Use:     "delete",
 -	Aliases: []string{"d"},
-+	Use:     "delete <note-path>",
++	Use:     "delete [note-path]",
 +	Aliases: []string{"del"},
  	Short:   "Delete note in vault",
 -	Args:    cobra.ExactArgs(1),
@@ -6670,15 +8078,39 @@ index f29f691..2c9d020 100644
 +
 +  # Delete from specific vault
 +  obsidian-cli delete "note" --vault "Archive"`,
-+	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
 +	RunE: func(cmd *cobra.Command, args []string) error {
  		vault := obsidian.Vault{Name: vaultName}
  		note := obsidian.Note{}
- 		notePath := args[0]
+-		notePath := args[0]
 -		params := actions.DeleteParams{NotePath: notePath}
 -		err := actions.DeleteNote(&vault, &note, params)
 -		if err != nil {
 -			log.Fatal(err)
++		notePath := ""
++
++		if len(args) > 0 && !deleteSelect {
++			notePath = args[0]
++		} else {
++			if !deleteSelect {
++				return errors.New("note path required (or use --ls)")
++			}
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			notePath = selected
++		}
++		if notePath == "" {
++			return errors.New("no note selected")
++		}
 +		params := actions.DeleteParams{
 +			NotePath: notePath,
 +			Force:    deleteForce,
@@ -6703,19 +8135,21 @@ index f29f691..2c9d020 100644
 +	deleteCmd.Flags().BoolVar(&deleteDryRun, "dry-run", false, "preview which file would be deleted without deleting it")
  	deleteCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
 +	deleteCmd.Flags().BoolVarP(&deleteForce, "force", "f", false, "skip confirmation if the note has incoming links")
++	deleteCmd.Flags().BoolVar(&deleteSelect, "ls", false, "select a note interactively")
++	deleteCmd.Flags().BoolVar(&deleteSelect, "select", false, "select a note interactively")
  	rootCmd.AddCommand(deleteCmd)
  }
 diff --git a/cmd/frontmatter.go b/cmd/frontmatter.go
 new file mode 100644
-index 0000000..4852f08
+index 0000000..e7a611d
 --- /dev/null
 +++ b/cmd/frontmatter.go
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,92 @@
 +package cmd
 +
 +import (
++	"errors"
 +	"fmt"
-+	"log"
 +
 +	"github.com/Yakitrak/obsidian-cli/pkg/actions"
 +	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
@@ -6727,9 +8161,10 @@ index 0000000..4852f08
 +var fmDelete bool
 +var fmKey string
 +var fmValue string
++var fmSelect bool
 +
 +var frontmatterCmd = &cobra.Command{
-+	Use:     "frontmatter <note>",
++	Use:     "frontmatter [note]",
 +	Aliases: []string{"fm"},
 +	Short:   "View or modify note frontmatter",
 +	Long: `View or modify YAML frontmatter in a note.
@@ -6741,11 +8176,34 @@ index 0000000..4852f08
 +  obsidian-cli frontmatter "My Note" --print
 +  obsidian-cli frontmatter "My Note" --edit --key "status" --value "done"
 +  obsidian-cli frontmatter "My Note" --delete --key "draft"`,
-+	Args: cobra.ExactArgs(1),
-+	Run: func(cmd *cobra.Command, args []string) {
-+		noteName := args[0]
++	Args: cobra.MaximumNArgs(1),
++	RunE: func(cmd *cobra.Command, args []string) error {
 +		vault := obsidian.Vault{Name: vaultName}
 +		note := obsidian.Note{}
++		noteName := ""
++
++		if len(args) > 0 && !fmSelect {
++			noteName = args[0]
++		} else {
++			if !fmSelect {
++				return errors.New("note path required (or use --ls)")
++			}
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
 +
 +		params := actions.FrontmatterParams{
 +			NoteName: noteName,
@@ -6758,17 +8216,20 @@ index 0000000..4852f08
 +
 +		output, err := actions.Frontmatter(&vault, &note, params)
 +		if err != nil {
-+			log.Fatal(err)
++			return err
 +		}
 +
 +		if output != "" {
 +			fmt.Print(output)
 +		}
++		return nil
 +	},
 +}
 +
 +func init() {
 +	frontmatterCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	frontmatterCmd.Flags().BoolVar(&fmSelect, "ls", false, "select a note interactively")
++	frontmatterCmd.Flags().BoolVar(&fmSelect, "select", false, "select a note interactively")
 +	frontmatterCmd.Flags().BoolVarP(&fmPrint, "print", "p", false, "print frontmatter")
 +	frontmatterCmd.Flags().BoolVarP(&fmEdit, "edit", "e", false, "edit a frontmatter key")
 +	frontmatterCmd.Flags().BoolVarP(&fmDelete, "delete", "d", false, "delete a frontmatter key")
@@ -7517,13 +8978,14 @@ index 0000000..f7324fe
 +	fmt.Println("- targets.yaml is stored next to preferences.json.")
 +}
 diff --git a/cmd/move.go b/cmd/move.go
-index 114dc62..25402a6 100644
+index 114dc62..6a6ffb6 100644
 --- a/cmd/move.go
 +++ b/cmd/move.go
-@@ -1,20 +1,33 @@
+@@ -1,28 +1,98 @@
  package cmd
  
  import (
++	"errors"
 +	"fmt"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
@@ -7534,13 +8996,16 @@ index 114dc62..25402a6 100644
  )
  
  var shouldOpen bool
++var moveSelect bool
  var moveCmd = &cobra.Command{
 -	Use:     "move",
-+	Use:     "move <from-note-path> <to-note-path>",
++	Use:     "move [from-note-path] [to-note-path]",
  	Aliases: []string{"m"},
 -	Short:   "Move or rename note in vault and updated corresponding links",
 -	Args:    cobra.ExactArgs(2),
 -	Run: func(cmd *cobra.Command, args []string) {
+-		currentName := args[0]
+-		newName := args[1]
 +	Short:   "Move or rename note in vault and update corresponding links",
 +	Long: `Moves or renames a note and updates all links pointing to it.
 +
@@ -7554,13 +9019,68 @@ index 114dc62..25402a6 100644
 +
 +  # Move and open the result
 +  obsidian-cli move "temp" "Archive/temp" --open`,
-+	Args: cobra.ExactArgs(2),
++	Args: cobra.MaximumNArgs(2),
 +	RunE: func(cmd *cobra.Command, args []string) error {
- 		currentName := args[0]
- 		newName := args[1]
  		vault := obsidian.Vault{Name: vaultName}
-@@ -22,7 +35,7 @@ var moveCmd = &cobra.Command{
+ 		note := obsidian.Note{}
  		uri := obsidian.Uri{}
++		currentName := ""
++		newName := ""
++
++		var vaultPath string
++		needVaultPath := moveSelect || len(args) < 2
++		if needVaultPath {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			p, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			vaultPath = p
++		}
++
++		switch len(args) {
++		case 2:
++			currentName = args[0]
++			newName = args[1]
++		case 1:
++			if moveSelect {
++				newName = args[0]
++				selected, err := pickExistingNotePath(vaultPath)
++				if err != nil {
++					return err
++				}
++				currentName = selected
++			} else {
++				currentName = args[0]
++				selected, err := promptNewNotePath(vaultPath)
++				if err != nil {
++					return err
++				}
++				newName = selected
++			}
++		case 0:
++			if !moveSelect {
++				return errors.New("from-note-path required (or use --ls)")
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			currentName = selected
++			selected, err = promptNewNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			newName = selected
++		default:
++			return errors.New("expected 0, 1, or 2 arguments")
++		}
++
++		if currentName == "" || newName == "" {
++			return errors.New("both from-note-path and to-note-path are required")
++		}
  		useEditor, err := cmd.Flags().GetBool("editor")
  		if err != nil {
 -			log.Fatalf("Failed to parse --editor flag: %v", err)
@@ -7568,7 +9088,7 @@ index 114dc62..25402a6 100644
  		}
  		params := actions.MoveParams{
  			CurrentNoteName: currentName,
-@@ -30,11 +43,7 @@ var moveCmd = &cobra.Command{
+@@ -30,17 +100,15 @@ var moveCmd = &cobra.Command{
  			ShouldOpen:      shouldOpen,
  			UseEditor:       useEditor,
  		}
@@ -7581,25 +9101,144 @@ index 114dc62..25402a6 100644
  	},
  }
  
+ func init() {
+ 	moveCmd.Flags().BoolVarP(&shouldOpen, "open", "o", false, "open new note")
+ 	moveCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	moveCmd.Flags().BoolVar(&moveSelect, "ls", false, "select the note to move interactively")
++	moveCmd.Flags().BoolVar(&moveSelect, "select", false, "select the note to move interactively")
+ 	moveCmd.Flags().BoolP("editor", "e", false, "open in editor instead of Obsidian (requires --open flag)")
+ 	rootCmd.AddCommand(moveCmd)
+ }
+diff --git a/cmd/note_picker.go b/cmd/note_picker.go
+new file mode 100644
+index 0000000..2613389
+--- /dev/null
++++ b/cmd/note_picker.go
+@@ -0,0 +1,103 @@
++package cmd
++
++import (
++	"bufio"
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"sort"
++	"strings"
++
++	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
++	"github.com/ktr0731/go-fuzzyfinder"
++)
++
++const (
++	notePickerNewNote   = "(Create new note...)"
++	notePickerVaultRoot = "(Vault root)"
++)
++
++func pickExistingNotePath(vaultPath string) (string, error) {
++	notes, err := listVaultNotes(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	if len(notes) == 0 {
++		return "", errors.New("no notes found in vault")
++	}
++	sort.Strings(notes)
++
++	idx, err := fuzzyfinder.Find(notes, func(i int) string { return notes[i] })
++	if err != nil {
++		return "", err
++	}
++	return notes[idx], nil
++}
++
++func pickNotePathOrNew(vaultPath string) (string, error) {
++	notes, err := listVaultNotes(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	notes = append(notes, notePickerNewNote)
++	sort.Strings(notes)
++
++	idx, err := fuzzyfinder.Find(notes, func(i int) string { return notes[i] })
++	if err != nil {
++		return "", err
++	}
++	choice := notes[idx]
++	if choice != notePickerNewNote {
++		return choice, nil
++	}
++	return promptNewNotePath(vaultPath)
++}
++
++func promptNewNotePath(vaultPath string) (string, error) {
++	folders, err := listVaultFolders(vaultPath)
++	if err != nil {
++		return "", err
++	}
++	folders = append(folders, notePickerVaultRoot, "(Create new folder...)")
++	sort.Strings(folders)
++
++	idx, err := fuzzyfinder.Find(folders, func(i int) string { return folders[i] })
++	if err != nil {
++		return "", err
++	}
++	choice := folders[idx]
++	switch choice {
++	case "(Create new folder...)":
++		created, err := promptCreateFolder(vaultPath)
++		if err != nil {
++			return "", err
++		}
++		choice = created
++	case notePickerVaultRoot:
++		choice = ""
++	}
++
++	in := bufio.NewReader(os.Stdin)
++	fmt.Println("Enter new note name (relative to the selected folder; .md optional):")
++	fmt.Print("> ")
++	name, err := in.ReadString('\n')
++	if err != nil {
++		return "", err
++	}
++	name = strings.TrimSpace(name)
++	if name == "" {
++		return "", errors.New("note name is required")
++	}
++	name = strings.TrimSuffix(name, ".md")
++
++	rel := strings.TrimSpace(filepath.ToSlash(filepath.Join(choice, name)))
++	if rel == "" {
++		return "", errors.New("note path is required")
++	}
++	if _, err := obsidian.SafeJoinVaultPath(vaultPath, rel); err != nil {
++		return "", err
++	}
++	return rel, nil
++}
++
 diff --git a/cmd/open.go b/cmd/open.go
-index 9a10bff..2520316 100644
+index 9a10bff..61bca0f 100644
 --- a/cmd/open.go
 +++ b/cmd/open.go
-@@ -1,8 +1,6 @@
+@@ -1,7 +1,7 @@
  package cmd
  
  import (
 -	"log"
--
++	"errors"
+ 
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
  	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
- 	"github.com/spf13/cobra"
-@@ -10,19 +8,28 @@ import (
+@@ -9,24 +9,57 @@ import (
+ )
  
  var vaultName string
++var openSelect bool
  var OpenVaultCmd = &cobra.Command{
 -	Use:     "open",
-+	Use:     "open <note-path>",
++	Use:     "open [note-path]",
  	Aliases: []string{"o"},
  	Short:   "Opens note in vault by note name",
 -	Args:    cobra.ExactArgs(1),
@@ -7616,27 +9255,57 @@ index 9a10bff..2520316 100644
 +
 +  # Open in a specific vault
 +  obsidian-cli open "Daily" --vault "Work"`,
-+	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
 +	RunE: func(cmd *cobra.Command, args []string) error {
  		vault := obsidian.Vault{Name: vaultName}
  		uri := obsidian.Uri{}
- 		noteName := args[0]
- 		params := actions.OpenParams{NoteName: noteName}
+-		noteName := args[0]
+-		params := actions.OpenParams{NoteName: noteName}
 -		err := actions.OpenNote(&vault, &uri, params)
 -		if err != nil {
 -			log.Fatal(err)
--		}
++		noteName := ""
++
++		if len(args) > 0 && !openSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickNotePathOrNew(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++
++		if noteName == "" {
++			return errors.New("no note selected")
+ 		}
++		params := actions.OpenParams{NoteName: noteName}
 +		return actions.OpenNote(&vault, &uri, params)
  	},
  }
  
+ func init() {
+ 	OpenVaultCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name (not required if default is set)")
++	OpenVaultCmd.Flags().BoolVar(&openSelect, "ls", false, "select a note interactively")
++	OpenVaultCmd.Flags().BoolVar(&openSelect, "select", false, "select a note interactively")
+ 	rootCmd.AddCommand(OpenVaultCmd)
+ }
 diff --git a/cmd/print.go b/cmd/print.go
-index 4b40d90..a98806e 100644
+index 4b40d90..a638b38 100644
 --- a/cmd/print.go
 +++ b/cmd/print.go
-@@ -2,20 +2,35 @@ package cmd
+@@ -1,36 +1,75 @@
+ package cmd
  
  import (
++	"errors"
  	"fmt"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
@@ -7647,13 +9316,15 @@ index 4b40d90..a98806e 100644
  )
  
  var shouldRenderMarkdown bool
++var printSelect bool
  var printCmd = &cobra.Command{
 -	Use:     "print",
-+	Use:     "print <note-path>",
++	Use:     "print [note-path]",
  	Aliases: []string{"p"},
  	Short:   "Print contents of note",
 -	Args:    cobra.ExactArgs(1),
 -	Run: func(cmd *cobra.Command, args []string) {
+-		noteName := args[0]
 +	Long: `Prints the contents of a note to stdout.
 +
 +Useful for piping note contents to other commands, or quickly viewing
@@ -7669,12 +9340,32 @@ index 4b40d90..a98806e 100644
 +
 +  # Copy to clipboard (macOS)
 +  obsidian-cli print "Template" | pbcopy`,
-+	Args: cobra.ExactArgs(1),
++	Args: cobra.MaximumNArgs(1),
 +	RunE: func(cmd *cobra.Command, args []string) error {
- 		noteName := args[0]
  		vault := obsidian.Vault{Name: vaultName}
++		noteName := ""
++		if len(args) > 0 && !printSelect {
++			noteName = args[0]
++		} else {
++			if _, err := vault.DefaultName(); err != nil {
++				return err
++			}
++			vaultPath, err := vault.Path()
++			if err != nil {
++				return err
++			}
++			selected, err := pickExistingNotePath(vaultPath)
++			if err != nil {
++				return err
++			}
++			noteName = selected
++		}
++		if noteName == "" {
++			return errors.New("no note selected")
++		}
  		note := obsidian.Note{}
-@@ -24,9 +39,10 @@ var printCmd = &cobra.Command{
+ 		params := actions.PrintParams{
+ 			NoteName: noteName,
  		}
  		contents, err := actions.PrintNote(&vault, &note, params)
  		if err != nil {
@@ -7686,6 +9377,12 @@ index 4b40d90..a98806e 100644
  	},
  }
  
+ func init() {
+ 	printCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
++	printCmd.Flags().BoolVar(&printSelect, "ls", false, "select a note interactively")
++	printCmd.Flags().BoolVar(&printSelect, "select", false, "select a note interactively")
+ 	rootCmd.AddCommand(printCmd)
+ }
 diff --git a/cmd/print_default.go b/cmd/print_default.go
 index bee464d..6b96a70 100644
 --- a/cmd/print_default.go
@@ -7740,15 +9437,79 @@ index bee464d..6b96a70 100644
  	},
  }
  
+diff --git a/cmd/root.go b/cmd/root.go
+index 3aed97e..20fd5ee 100644
+--- a/cmd/root.go
++++ b/cmd/root.go
+@@ -3,7 +3,9 @@ package cmd
+ import (
+ 	"fmt"
+ 	"os"
++	"strings"
+ 
++	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+ 	"github.com/spf13/cobra"
+ )
+ 
+@@ -15,8 +17,48 @@ var rootCmd = &cobra.Command{
+ }
+ 
+ func Execute() {
++	maybeRewriteArgsForTargetNames()
+ 	if err := rootCmd.Execute(); err != nil {
+ 		fmt.Fprintf(os.Stderr, "Whoops. There was an error while executing your CLI '%s'", err)
+ 		os.Exit(1)
+ 	}
+ }
++
++func maybeRewriteArgsForTargetNames() {
++	args := os.Args[1:]
++	if len(args) == 0 {
++		return
++	}
++	first := strings.TrimSpace(args[0])
++	if first == "" || strings.HasPrefix(first, "-") {
++		return
++	}
++	if isKnownRootCommand(first) {
++		return
++	}
++
++	cfg, err := obsidian.LoadTargets()
++	if err != nil {
++		return
++	}
++	if _, ok := cfg[first]; !ok {
++		return
++	}
++
++	// Treat: obsidian-cli <targetName> ... as: obsidian-cli target <targetName> ...
++	rootCmd.SetArgs(append([]string{"target"}, args...))
++}
++
++func isKnownRootCommand(name string) bool {
++	for _, c := range rootCmd.Commands() {
++		if c.Name() == name {
++			return true
++		}
++		for _, a := range c.Aliases {
++			if a == name {
++				return true
++			}
++		}
++	}
++	return false
++}
 diff --git a/cmd/search.go b/cmd/search.go
-index 47740f5..571b243 100644
+index 47740f5..c6c4836 100644
 --- a/cmd/search.go
 +++ b/cmd/search.go
-@@ -1,9 +1,10 @@
+@@ -1,9 +1,11 @@
  package cmd
  
  import (
 +	"fmt"
++	"strings"
 +
  	"github.com/Yakitrak/obsidian-cli/pkg/actions"
  	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
@@ -7756,7 +9517,7 @@ index 47740f5..571b243 100644
  
  	"github.com/spf13/cobra"
  )
-@@ -12,20 +13,29 @@ var searchCmd = &cobra.Command{
+@@ -12,20 +14,58 @@ var searchCmd = &cobra.Command{
  	Use:     "search",
  	Aliases: []string{"s"},
  	Short:   "Fuzzy searches and opens note in vault",
@@ -7777,19 +9538,49 @@ index 47740f5..571b243 100644
 +	Args: cobra.NoArgs,
 +	RunE: func(cmd *cobra.Command, args []string) error {
  		vault := obsidian.Vault{Name: vaultName}
- 		note := obsidian.Note{}
- 		uri := obsidian.Uri{}
- 		fuzzyFinder := obsidian.FuzzyFinder{}
+-		note := obsidian.Note{}
+-		uri := obsidian.Uri{}
+-		fuzzyFinder := obsidian.FuzzyFinder{}
  		useEditor, err := cmd.Flags().GetBool("editor")
  		if err != nil {
 -			log.Fatalf("failed to retrieve 'editor' flag: %v", err)
--		}
--		err = actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor)
--		if err != nil {
--			log.Fatal(err)
 +			return fmt.Errorf("failed to retrieve 'editor' flag: %w", err)
++		}
++
++		if _, err := vault.DefaultName(); err != nil {
++			return err
  		}
-+		return actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor)
+-		err = actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor)
++		vaultPath, err := vault.Path()
+ 		if err != nil {
+-			log.Fatal(err)
++			return err
+ 		}
++
++		notePath, err := pickNotePathOrNew(vaultPath)
++		if err != nil {
++			return err
++		}
++		if strings.TrimSpace(notePath) == "" {
++			return fmt.Errorf("no note selected")
++		}
++
++		if useEditor {
++			fmt.Printf("Opening note: %s\n", notePath)
++			rel := notePath
++			if !strings.HasSuffix(strings.ToLower(rel), ".md") {
++				rel += ".md"
++			}
++			abs, err := obsidian.SafeJoinVaultPath(vaultPath, rel)
++			if err != nil {
++				return err
++			}
++			return obsidian.OpenInEditor(abs)
++		}
++
++		uri := obsidian.Uri{}
++		params := actions.OpenParams{NoteName: notePath}
++		return actions.OpenNote(&vault, &uri, params)
  	},
  }
  
@@ -7902,10 +9693,10 @@ index f2cb992..75a7c85 100644
  
 diff --git a/cmd/target.go b/cmd/target.go
 new file mode 100644
-index 0000000..c604555
+index 0000000..720e19e
 --- /dev/null
 +++ b/cmd/target.go
-@@ -0,0 +1,1325 @@
+@@ -0,0 +1,1326 @@
 +package cmd
 +
 +import (
@@ -7930,7 +9721,8 @@ index 0000000..c604555
 +)
 +
 +var targetCmd = &cobra.Command{
-+	Use:   "target [id] [text]",
++	Use:     "target [id] [text]",
++	Aliases: []string{"t"},
 +	Short: "Append text to a configured target note",
 +	Long: `Appends text to a note configured in targets.yaml.
 +

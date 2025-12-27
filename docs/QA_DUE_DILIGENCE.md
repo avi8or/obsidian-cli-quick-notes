@@ -7,6 +7,8 @@ This repository is a **merge simulation** of `Yakitrak/obsidian-cli` with the �
 
 ## What We Verified
 
+We re-ran a full “merge sim” against the latest upstream `origin/main`, merging each PR branch sequentially (non-fast-forward) and running `go test` + `go build` after each merge.
+
 All verification was run in an isolated per-repo sandbox directory:
 
 - `QA_ROOT="$PWD/.qa"`
@@ -19,28 +21,43 @@ Artifacts under `.qa/` are **not committed** (no binaries/logs checked in).
 
 ## Commands Run
 
-- `go test -mod=vendor ./...`
-- `go build -mod=vendor -o "$QA_ROOT/bin/obsidian-cli_<branch>" .`
-- Help/alias sanity checks:
-  - `obsidian-cli delete --help`
-  - `obsidian-cli del --help`
-  - `obsidian-cli d --help`
+- Per-PR merge sim (recorded in `.qa/logs/*.log`):
+  - `git merge --no-ff --no-edit quicknotes/<pr-branch>`
+  - `go test -mod=vendor ./...`
+  - `go build -mod=vendor -o "$QA_ROOT/bin/obsidian-cli_<pr>_<run_id>" .`
+- Help/alias sanity checks (captured as text under `.qa/logs/*_help.txt`):
+  - `obsidian-cli delete --help` / `obsidian-cli del --help`
+  - `obsidian-cli target --help` / `obsidian-cli t --help`
+  - `obsidian-cli open --help` / `create --help` / `print --help` / `frontmatter --help`
 
 ## Results (Recorded)
 
 Environment + run metadata:
 
-- Go version: `go version go1.25.5 darwin/arm64` (confirmed from `.qa/logs/go_version.txt`)
-- Audit: `{ "verification_status": "complete", "unverified_claims": 0, "timestamp": "2025-12-27T00:37:29Z" }` (confirmed from `.qa/QA_AUDIT_post_ba966c7.json`)
+- Go version: `go version go1.25.5 darwin/arm64` (confirmed from `go version` output during QA run)
+- Latest upstream merge-sim run ID: `20251227T060241Z` (confirmed from `.qa/QA_SUMMARY_latest_upstream_20251227T060241Z.md`)
 
-Summary (confirmed from `.qa/QA_SUMMARY_post_ba966c7.json`):
+### Latest Upstream Merge Sim (PASS)
 
-- `pr-03-delete` @ `c20affdfe1aad365e123839c2fc8c1d299cf4786` — `go test` passed; `delete` aliases: `delete, del`
-- `pr-04d-init` @ `ff8b67374a80d03d145413699e5c039ec5bd062d` — `go test` passed; `delete` aliases: `delete, del`
-- `all-prs-merged` @ `dba51b42062fabd52b255140958e5297245fae95` — `go test` passed; `delete` aliases: `delete, del`
+Baseline: `origin/main` @ `1b06c32570b17684ba08b958f86368577e87fd20` (confirmed from `.qa/QA_SUMMARY_latest_upstream_20251227T060241Z.md`)
 
-Behavior spot-check (confirmed from `.qa/logs/*_d_help.txt` and `.qa/logs/*_del_help.txt`):
+All PR merges passed `go test` and `go build` when merged sequentially onto the latest upstream baseline (confirmed from `.qa/QA_SUMMARY_latest_upstream_20251227T060241Z.json`):
 
-- `d` resolves to `daily`
-- `del` resolves to `delete`
+- `pr-01-ux` → merge commit `e3b525bdc9c016793194bc8e0358dfe0ea274db1`
+- `pr-02-links` → merge commit `697ca6857e19aa17fb8f54addf69ca7c00f5ae0d`
+- `pr-03-delete` → merge commit `74d06c1bc4c4fb50869e241e39fc8b8d2f91b70c`
+- `pr-04a-settings` → merge commit `7d88a862396c35ef70c1f188a166d3d5c811ffce`
+- `pr-04b-append` → merge commit `bdadc6622f2acbf7d72e7892356e47c1b70fc387`
+- `pr-04d-init` → merge commit `c67a1331cd8587dd040e6b61f1f235b13a208e8d`
 
+### Behavior Spot Checks (PASS)
+
+Verified behavior from captured `--help` output under `.qa/logs/20251227T060241Z_*_help.txt`:
+
+- `delete` aliases: `delete, del` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_delete_help.txt`)
+- `target` has alias `t` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_target_help.txt`)
+- Note picker flags are present where expected:
+  - `open` supports `--ls/--select` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_open_help.txt`)
+  - `create` supports `--ls/--select` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_create_help.txt`)
+  - `print` supports `--ls/--select` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_print_help.txt`)
+  - `frontmatter` supports `--ls/--select` (confirmed from `.qa/logs/20251227T060241Z_pr-04d-init_frontmatter_help.txt`)

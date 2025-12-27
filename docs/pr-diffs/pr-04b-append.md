@@ -1,8 +1,8 @@
 # pr-04b-append
 
 Baseline: origin/main (1b06c32570b17684ba08b958f86368577e87fd20)
-Previous: pr-04a-settings (90073194af6ef5d8a39abbeee45a2c2dd70e0257)
-This PR: pr-04b-append (9283b72917c6b8e36b750760eae7dbac14176bdb)
+Previous: pr-04a-settings (21aaeddabd05c5fc1536f1294c6895352368d5ea)
+This PR: pr-04b-append (900d9baec9c05b5d63d7fe6999ee7509ddcbe782)
 
 ## Incremental Diff (vs previous in stack)
 
@@ -10,19 +10,24 @@ Compare: pr-04a-settings..pr-04b-append
 
 ### Commits
 ```
-9283b72 fix(delete): use 'del' alias
-3df0531 docs: refresh README (pr-04b-append)
-ffbec38 docs: README document append command
-bb67cc9 feat(append): add daily note append command
+900d9ba fix(delete): use 'del' alias
+7bcfa66 docs: refresh README (pr-04b-append)
+32b835f docs: README document append command
+fea6040 feat(append): add daily note append command
+2b849c1 docs: README mention preferences.json and per-vault settings
+9071de0 docs: README document delete confirmation and --force
+533ca73 feat(delete): warn when note has incoming links
+dd03cfb docs: acknowledge upstream PR #58 for link updates
+6b619bc docs: README clarify move link updates
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                  |  71 ++++++++++++++++++++
+ README.md                  |  73 ++++++++++++++++++++-
  cmd/append.go              |  68 +++++++++++++++++++
  pkg/actions/append.go      | 158 +++++++++++++++++++++++++++++++++++++++++++++
  pkg/actions/append_test.go |  99 ++++++++++++++++++++++++++++
- 4 files changed, 396 insertions(+)
+ 4 files changed, 397 insertions(+), 1 deletion(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -32,18 +37,27 @@ bb67cc9 feat(append): add daily note append command
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 3faa817..ef11855 100644
+index c7d7d53..58ff503 100644
 --- a/README.md
 +++ b/README.md
-@@ -12,6 +12,7 @@ Usage:
-   obsidian-cli [command]
+@@ -13,6 +13,7 @@ Usage:
  
  Available Commands:
+   alias          Generate a shell alias snippet or install a symlink shortcut
 +  append         Append text to today's daily note
    completion     Generate the autocompletion script for the specified shell
    create         Creates note in vault
    daily          Creates or opens daily note in vault
-@@ -254,6 +255,76 @@ obsidian-cli daily --vault "{vault-name}"
+@@ -139,7 +140,7 @@ Note: `open` and other commands in `obsidian-cli` use this vault's base director
+ 
+ - `obsidian-cli/preferences.json`
+ 
+-PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
++This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration). For example:
+ 
+ ```json
+ {
+@@ -278,6 +279,76 @@ obsidian-cli daily --vault "{vault-name}"
  
  ```
  
@@ -471,47 +485,68 @@ Compare: origin/main..pr-04b-append
 
 ### Commits
 ```
-9283b72 fix(delete): use 'del' alias
-3df0531 docs: refresh README (pr-04b-append)
-ffbec38 docs: README document append command
-bb67cc9 feat(append): add daily note append command
-424ac98 fix(config): enforce secure perms on preferences
-f7cb7ea docs: README mention preferences.json and per-vault settings
-4f2a0a8 feat(config): add per-vault settings to preferences.json
-e4d1520 docs: README document delete confirmation and --force
-d3a471d feat(delete): warn when note has incoming links
-efb95c4 docs: acknowledge upstream PR #58 for link updates
-d06731f docs: README clarify move link updates
-6233ae2 fix: update path-based wikilinks and markdown links when moving notes
+900d9ba fix(delete): use 'del' alias
+7bcfa66 docs: refresh README (pr-04b-append)
+32b835f docs: README document append command
+fea6040 feat(append): add daily note append command
+2b849c1 docs: README mention preferences.json and per-vault settings
+9071de0 docs: README document delete confirmation and --force
+533ca73 feat(delete): warn when note has incoming links
+dd03cfb docs: acknowledge upstream PR #58 for link updates
+6b619bc docs: README clarify move link updates
+21aaedd fix(delete): use 'del' alias
+022b22d docs: refresh README (pr-04a-settings)
+1f72c77 fix(config): enforce secure perms on preferences
+38d6fdc docs: README mention preferences.json and per-vault settings
+9a9556a feat(config): add per-vault settings to preferences.json
+ceec85e docs: README document delete confirmation and --force
+dedd70a feat(delete): warn when note has incoming links
+508047d docs: acknowledge upstream PR #58 for link updates
+a6b408a docs: README clarify move link updates
+bb3ac19 fix(delete): use 'del' alias
+eaa2818 docs: refresh README (pr-03-delete)
+6a92bec docs: README document delete confirmation and --force
+9603bb0 feat(delete): warn when note has incoming links
+1335bcd docs: acknowledge upstream PR #58 for link updates
+c0e5926 docs: README clarify move link updates
+9bbb6fa docs: refresh README (pr-02-links)
+3f5cc8a docs: acknowledge upstream PR #58 for link updates
+6749716 docs: README clarify move link updates
+3545693 fix: update path-based wikilinks and markdown links when moving notes
+5e56d0f docs: README mention command-specific help
+8bb520e docs: update generated help (pr-01-ux)
+63ea5e1 feat(cli): add alias helper command
+ee4eee9 docs: refresh README (pr-01-ux)
 06d79e8 docs: README mention command-specific help
 d9d3fa9 feat(cli): improve help and error handling
 ```
 
 ### Diff Stat (all files)
 ```
- README.md                               | 242 +++++++++++++++++++++++++++++++-
- cmd/append.go                           |  68 +++++++++
+ README.md                               | 266 +++++++++++++++++++++++++++++++-
+ cmd/alias.go                            | 191 +++++++++++++++++++++++
+ cmd/append.go                           |  68 ++++++++
  cmd/create.go                           |  35 +++--
- cmd/delete.go                           |  33 +++--
+ cmd/delete.go                           |  33 ++--
  cmd/move.go                             |  31 ++--
- cmd/open.go                             |  25 ++--
+ cmd/open.go                             |  25 +--
  cmd/print.go                            |  26 +++-
  cmd/print_default.go                    |  22 ++-
- cmd/search.go                           |  26 ++--
+ cmd/search.go                           |  26 +++-
  cmd/search_content.go                   |  27 ++--
  cmd/set_default.go                      |  26 ++--
- pkg/actions/append.go                   | 158 +++++++++++++++++++++
- pkg/actions/append_test.go              |  99 +++++++++++++
- pkg/actions/delete.go                   |  32 +++++
+ pkg/actions/append.go                   | 158 +++++++++++++++++++
+ pkg/actions/append_test.go              |  99 ++++++++++++
+ pkg/actions/delete.go                   |  32 ++++
  pkg/obsidian/note.go                    |  10 +-
  pkg/obsidian/note_test.go               |  78 ++++++++++
- pkg/obsidian/utils.go                   | 142 +++++++++++++++++++
- pkg/obsidian/utils_test.go              |  97 +++++++++++++
+ pkg/obsidian/utils.go                   | 142 +++++++++++++++++
+ pkg/obsidian/utils_test.go              |  97 ++++++++++++
  pkg/obsidian/vault.go                   |  18 ++-
- pkg/obsidian/vault_default_name.go      |  99 ++++++++++++-
+ pkg/obsidian/vault_default_name.go      |  99 +++++++++++-
  pkg/obsidian/vault_default_name_test.go |  14 +-
- pkg/obsidian/vault_settings_test.go     |  82 +++++++++++
- 22 files changed, 1292 insertions(+), 98 deletions(-)
+ pkg/obsidian/vault_settings_test.go     |  82 ++++++++++
+ 23 files changed, 1507 insertions(+), 98 deletions(-)
 ```
 
 ### Diff Stat (vendor only)
@@ -521,10 +556,10 @@ d9d3fa9 feat(cli): improve help and error handling
 ### Patch (excluding vendor/)
 ```diff
 diff --git a/README.md b/README.md
-index 591f921..ef11855 100644
+index 591f921..58ff503 100644
 --- a/README.md
 +++ b/README.md
-@@ -2,7 +2,36 @@
+@@ -2,7 +2,37 @@
  
  ---
  
@@ -539,6 +574,7 @@ index 591f921..ef11855 100644
 +  obsidian-cli [command]
 +
 +Available Commands:
++  alias          Generate a shell alias snippet or install a symlink shortcut
 +  append         Append text to today's daily note
 +  completion     Generate the autocompletion script for the specified shell
 +  create         Creates note in vault
@@ -562,7 +598,37 @@ index 591f921..ef11855 100644
  
  ## Description
  
-@@ -83,6 +112,57 @@ obsidian-cli set-default "{vault-name}"
+@@ -48,6 +78,29 @@ For full installation instructions, see [Mac and Linux manual](https://yakitrak.
+ obsidian-cli --help
+ ```
+ 
++For detailed help (including examples) for a specific command:
++
++```bash
++obsidian-cli <command> --help
++```
++
++### Command Shortcut (Alias)
++
++If you want a shorter command name (for example `obsi`), you can either:
++
++- Create a shell alias (session-scoped unless you add it to your shell profile):
++
++  ```bash
++  # zsh/bash
++  eval "$(obsidian-cli alias obsi --shell zsh)"
++  ```
++
++- Or install a persistent symlink shortcut (recommended):
++
++  ```bash
++  obsidian-cli alias obsi --symlink --dir "$HOME/.local/bin"
++  ```
++
+ ### Editor Flag
+ 
+ The `search`, `search-content`, `create`, and `move` commands support the `--editor` (or `-e`) flag, which opens notes in your default text editor instead of the Obsidian application. This is useful for quick edits or when working in a terminal-only environment.
+@@ -83,6 +136,57 @@ obsidian-cli set-default "{vault-name}"
  
  Note: `open` and other commands in `obsidian-cli` use this vault's base directory as the working directory, not the current working directory of your terminal.
  
@@ -570,7 +636,7 @@ index 591f921..ef11855 100644
 +
 +- `obsidian-cli/preferences.json`
 +
-+PR04a also introduces optional per-vault settings under `vault_settings` (keyed by vault name). For example:
++This preferences file also supports optional per-vault settings under `vault_settings` (for example, daily note configuration). For example:
 +
 +```json
 +{
@@ -620,7 +686,7 @@ index 591f921..ef11855 100644
  ### Print Default Vault
  
  Prints default vault and path. Please set this with `set-default` command if not set.
-@@ -95,6 +175,35 @@ obsidian-cli print-default
+@@ -95,6 +199,35 @@ obsidian-cli print-default
  obsidian-cli print-default --path-only
  ```
  
@@ -656,7 +722,7 @@ index 591f921..ef11855 100644
  You can add this to your shell configuration file (like `~/.zshrc`) to quickly navigate to the default vault:
  
  ```bash
-@@ -106,6 +215,18 @@ obs_cd() {
+@@ -106,6 +239,18 @@ obs_cd() {
  
  Then you can use `obs_cd` to navigate to the default vault directory within your terminal.
  
@@ -675,7 +741,7 @@ index 591f921..ef11855 100644
  ### Open Note
  
  Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
-@@ -121,7 +242,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
+@@ -121,7 +266,9 @@ obsidian-cli open "{note-name}" --vault "{vault-name}"
  
  ### Daily Note
  
@@ -686,7 +752,7 @@ index 591f921..ef11855 100644
  
  ```bash
  # Creates / opens daily note in obsidian vault
-@@ -132,6 +255,76 @@ obsidian-cli daily --vault "{vault-name}"
+@@ -132,6 +279,76 @@ obsidian-cli daily --vault "{vault-name}"
  
  ```
  
@@ -763,7 +829,7 @@ index 591f921..ef11855 100644
  ### Search Note
  
  Starts a fuzzy search displaying notes in the terminal from the vault. You can hit enter on a note to open that in Obsidian.
-@@ -230,14 +423,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
+@@ -230,14 +447,55 @@ obsidian-cli move "{current-note-path}" "{new-note-path}" --open --editor
  
  Deletes a given note (path from top level of vault).
  
@@ -821,6 +887,203 @@ index 591f921..ef11855 100644
  ## Contribution
  
  Fork the project, add your feature or fix and submit a pull request. You can also open an [issue](https://github.com/yakitrak/obsidian-cli/issues/new/choose) to report a bug or request a feature.
+diff --git a/cmd/alias.go b/cmd/alias.go
+new file mode 100644
+index 0000000..5b26cd9
+--- /dev/null
++++ b/cmd/alias.go
+@@ -0,0 +1,191 @@
++package cmd
++
++import (
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++	"runtime"
++	"strings"
++
++	"github.com/spf13/cobra"
++)
++
++type aliasShell string
++
++const (
++	aliasShellBash       aliasShell = "bash"
++	aliasShellZsh        aliasShell = "zsh"
++	aliasShellFish       aliasShell = "fish"
++	aliasShellPowerShell aliasShell = "powershell"
++	aliasShellCmd        aliasShell = "cmd"
++)
++
++var aliasCmdName string
++var aliasCmdShell string
++var aliasCmdPrint bool
++var aliasCmdSymlink bool
++var aliasCmdSymlinkDir string
++var aliasCmdForce bool
++var aliasCmdDryRun bool
++
++var aliasCmd = &cobra.Command{
++	Use:   "alias [name]",
++	Short: "Generate a shell alias snippet or install a symlink shortcut",
++	Long: `Aliases are typically a shell feature. This command helps by generating an alias snippet you can add to your shell profile,
++or by creating a symlink (e.g. ~/.local/bin/obsi -> obsidian-cli) so you can run the CLI with a shorter name.`,
++	Args: cobra.MaximumNArgs(1),
++	Example: `  # Print an alias snippet (paste into your shell profile, or eval it)
++  obsidian-cli alias obsi --shell zsh
++  eval "$(obsidian-cli alias obsi --shell zsh)"
++
++  # Install a symlink shortcut (recommended for a persistent shortcut)
++  obsidian-cli alias obsi --symlink --dir "$HOME/.local/bin"`,
++	RunE: func(cmd *cobra.Command, args []string) error {
++		if len(args) == 1 && aliasCmdName == "" {
++			aliasCmdName = args[0]
++		}
++		if aliasCmdName == "" {
++			return errors.New("alias name is required (provide [name] or --name)")
++		}
++
++		if !isValidAliasName(aliasCmdName) {
++			return fmt.Errorf("invalid alias name %q (use letters/numbers/underscore/dash; must start with a letter)", aliasCmdName)
++		}
++
++		shell := normalizeShell(aliasCmdShell, os.Getenv("SHELL"))
++
++		if aliasCmdSymlink {
++			if aliasCmdSymlinkDir == "" {
++				return errors.New("--dir is required when using --symlink")
++			}
++			if err := installSymlinkAlias(aliasCmdName, aliasCmdSymlinkDir, aliasCmdForce, aliasCmdDryRun); err != nil {
++				return err
++			}
++			if !aliasCmdPrint {
++				return nil
++			}
++		}
++
++		if aliasCmdPrint {
++			fmt.Print(renderAliasSnippet(aliasCmdName, shell))
++		}
++		return nil
++	},
++}
++
++func init() {
++	aliasCmd.Flags().StringVar(&aliasCmdName, "name", "", "alias name (e.g. obsi)")
++	aliasCmd.Flags().StringVar(&aliasCmdShell, "shell", "", "shell for snippet output: bash, zsh, fish, powershell, cmd (default: detect from $SHELL)")
++	aliasCmd.Flags().BoolVar(&aliasCmdPrint, "print", true, "print the alias snippet to stdout")
++
++	aliasCmd.Flags().BoolVar(&aliasCmdSymlink, "symlink", false, "install a symlink shortcut in --dir pointing to this executable")
++	aliasCmd.Flags().StringVar(&aliasCmdSymlinkDir, "dir", filepath.Join(os.Getenv("HOME"), ".local", "bin"), "directory to place the symlink (used with --symlink)")
++	aliasCmd.Flags().BoolVar(&aliasCmdForce, "force", false, "overwrite an existing file at the symlink path")
++	aliasCmd.Flags().BoolVar(&aliasCmdDryRun, "dry-run", false, "show what would be done without writing anything")
++
++	rootCmd.AddCommand(aliasCmd)
++}
++
++func isValidAliasName(name string) bool {
++	if name == "" {
++		return false
++	}
++	first := name[0]
++	if !((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')) {
++		return false
++	}
++	for i := 0; i < len(name); i++ {
++		c := name[i]
++		isLetter := (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
++		isDigit := c >= '0' && c <= '9'
++		isOK := isLetter || isDigit || c == '_' || c == '-'
++		if !isOK {
++			return false
++		}
++	}
++	return true
++}
++
++func normalizeShell(flag string, envShell string) aliasShell {
++	if flag != "" {
++		return aliasShell(strings.ToLower(strings.TrimSpace(flag)))
++	}
++	base := strings.ToLower(filepath.Base(envShell))
++	switch base {
++	case "bash":
++		return aliasShellBash
++	case "zsh":
++		return aliasShellZsh
++	case "fish":
++		return aliasShellFish
++	case "pwsh", "powershell":
++		return aliasShellPowerShell
++	case "cmd", "cmd.exe":
++		return aliasShellCmd
++	default:
++		return aliasShellZsh
++	}
++}
++
++func renderAliasSnippet(name string, shell aliasShell) string {
++	switch shell {
++	case aliasShellFish:
++		return fmt.Sprintf("alias %s 'obsidian-cli'\n", name)
++	case aliasShellPowerShell:
++		return fmt.Sprintf("Set-Alias -Name %s -Value obsidian-cli\n", name)
++	case aliasShellCmd:
++		return fmt.Sprintf("doskey %s=obsidian-cli $*\n", name)
++	case aliasShellBash, aliasShellZsh:
++		fallthrough
++	default:
++		return fmt.Sprintf("alias %s=\"obsidian-cli\"\n", name)
++	}
++}
++
++func installSymlinkAlias(name string, dir string, force bool, dryRun bool) error {
++	exe, err := os.Executable()
++	if err != nil {
++		return err
++	}
++	exe, err = filepath.EvalSymlinks(exe)
++	if err != nil {
++		return err
++	}
++
++	if err := os.MkdirAll(dir, 0o755); err != nil {
++		return err
++	}
++
++	linkName := name
++	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(linkName), ".exe") {
++		linkName += ".exe"
++	}
++	dst := filepath.Join(dir, linkName)
++
++	if _, err := os.Lstat(dst); err == nil {
++		if !force {
++			return fmt.Errorf("refusing to overwrite existing path: %s (use --force)", dst)
++		}
++		if dryRun {
++			fmt.Printf("Would remove existing path: %s\n", dst)
++		} else if err := os.Remove(dst); err != nil {
++			return err
++		}
++	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
++		return err
++	}
++
++	if dryRun {
++		fmt.Printf("Would create symlink: %s -> %s\n", dst, exe)
++		return nil
++	}
++	if err := os.Symlink(exe, dst); err != nil {
++		if runtime.GOOS == "windows" {
++			return fmt.Errorf("failed to create symlink %s -> %s: %w (Windows may require admin/developer mode)", dst, exe, err)
++		}
++		return err
++	}
++	return nil
++}
++
 diff --git a/cmd/append.go b/cmd/append.go
 new file mode 100644
 index 0000000..cf40752
