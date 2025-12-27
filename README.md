@@ -46,9 +46,56 @@ This CLI tool (written in Go) lets you interact with Obsidian from the terminal:
 - Capture into named “targets” configured in `targets.yaml`
 - Guided `init` wizard to set up defaults
 
-## Versioning (Maintainer Note)
+## Maintainer Note
 
-This PR keeps `obsidian-cli` at `v0.2.0` to avoid unnecessary merge/rebase churn across a stacked PR chain. If you merge the full chain (or the “just merge it” option), consider doing a single version bump afterward (for example to `v0.3.0`) in a follow-up PR/release.
+This repo is a merge-simulation of Yakitrak/obsidian-cli plus the “quick notes” work. The main branch represents the “just merge it” snapshot (all changes applied), while each individual PR slice is also available as a separate pr-* branch for review and cherry-picking. For a clear, per-PR breakdown (incremental vs previous PR in the stack, and cumulative vs upstream origin/main), see the diff docs: https://github.com/avi8or/obsidian-cli-quick-notes/tree/main/docs/pr-diffs. This PR keeps `obsidian-cli` at `v0.2.0` to avoid unnecessary merge/rebase churn across a stacked PR chain. If you merge the full chain (or the “just merge it” option), consider doing a single version bump afterward (for example to `v0.3.0`) in a follow-up PR/release. The readme files for each individual PR take the original Yakitrak repo 0.2.0 and incorporate only the new stuff that specific PR incorporates. Think of it this way: main=Yakitrak's obsidian-cli with all of my PRs already merged. If a more granular approach is desired, be aware that the PRs are setup as a chain, later PRs depend on earlier PRs. 
+
+### PR Diff Docs
+
+- Link: https://github.com/avi8or/obsidian-cli-quick-notes/tree/main/docs/pr-diffs
+
+Each `pr-XX-*.md` file contains **two comparisons**:
+
+1. **Incremental (vs previous PR in the stack)**
+   - Shows what **PR-XX adds on top of PR-(XX-1)** already merged.
+
+2. **Cumulative (vs upstream baseline)**
+   - Shows what **PR-XX adds compared to upstream `origin/main`** (the `obsidian-cli v0.2.0` baseline).
+
+---
+
+### PR Stack Order
+
+`pr-01-ux` → `pr-02-links` → `pr-03-delete` → `pr-04a-settings` → `pr-04b-append` → `pr-04d-init`
+
+---
+
+### Per-PR Comparisons
+
+#### `pr-01-ux`
+- **Incremental:** `origin/main..pr-01-ux`
+- **Cumulative:** `origin/main..pr-01-ux`
+
+#### `pr-02-links`
+- **Incremental:** `pr-01-ux..pr-02-links`
+- **Cumulative:** `origin/main..pr-02-links` *(includes PR1 + PR2)*
+
+#### `pr-03-delete`
+- **Incremental:** `pr-02-links..pr-03-delete`
+- **Cumulative:** `origin/main..pr-03-delete` *(includes PR1 + PR2 + PR3)*
+
+#### `pr-04a-settings`
+- **Incremental:** `pr-03-delete..pr-04a-settings`
+- **Cumulative:** `origin/main..pr-04a-settings` *(includes PR1–PR4a)*
+
+#### `pr-04b-append`
+- **Incremental:** `pr-04a-settings..pr-04b-append`
+- **Cumulative:** `origin/main..pr-04b-append` *(includes PR1–PR4b)*
+
+#### `pr-04d-init`
+- **Incremental:** `pr-04b-append..pr-04d-init`
+- **Cumulative:** `origin/main..pr-04d-init` *(includes PR1–PR4d)*
+
 
 ---
 
